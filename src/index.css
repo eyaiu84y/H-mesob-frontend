@@ -1,0 +1,751 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========== Dark mode base ========== */
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Dark mode section backgrounds */
+html.dark .about-section {
+  background: repeating-linear-gradient(135deg, rgba(15,23,42,0.95) 50%, rgba(30,58,138,0.7) 0%, rgba(15,23,42,0.92) 50%);
+}
+html.dark .news {
+  background: repeating-linear-gradient(135deg, rgba(15,23,42,0.95) 50%, rgba(30,58,138,0.7) 0%, rgba(15,23,42,0.92) 50%);
+}
+html.dark .popular-services {
+  background: repeating-linear-gradient(135deg, rgba(15,23,42,0.95) 50%, rgba(30,58,138,0.7) 0%, rgba(15,23,42,0.92) 50%);
+}
+html.dark .Address {
+  background: repeating-linear-gradient(135deg, rgba(15,23,42,0.95) 50%, rgba(30,58,138,0.7) 0%, rgba(15,23,42,0.92) 50%);
+}
+html.dark .video-section {
+  background: #0f172a;
+}
+html.dark .government {
+  background: #0f172a;
+}
+html.dark .message {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+html.dark .message .contacts {
+  color: #f1f5f9;
+}
+
+/* Dark mode cards */
+html.dark .org-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+html.dark .org-card h5 {
+  color: #f1f5f9;
+}
+html.dark .org-card {
+  background-image: linear-gradient(#1e293b, #1e293b), var(--org-gradient);
+}
+
+html.dark .svc-item {
+  background: #1e293b;
+  border-color: #334155;
+}
+html.dark .svc-item.open {
+  background: #253044;
+}
+html.dark .svc-toggle {
+  color: #f1f5f9;
+}
+html.dark .svc-toggle:hover {
+  background: #334155;
+}
+html.dark .svc-panel {
+  border-top-color: #334155;
+}
+html.dark .svc-meta span { color: #94a3b8; }
+html.dark .svc-meta strong { color: #f1f5f9; }
+html.dark .svc-docs { color: #cbd5e1; }
+html.dark .org-modal-panel {
+  background: #1e293b;
+}
+html.dark .org-modal-header {
+  border-bottom-color: #334155;
+}
+html.dark #orgModalTitle {
+  color: #f1f5f9;
+}
+html.dark .org-modal-close {
+  background: #334155;
+  color: #94a3b8;
+}
+html.dark .org-modal-close:hover {
+  background: #475569;
+  color: #f1f5f9;
+}
+
+/* Dark mode news & video cards */
+html.dark .news-card,
+html.dark .video-card {
+  background: #1e293b !important;
+  color: #f1f5f9;
+}
+html.dark .news-card h3,
+html.dark .video-card p {
+  color: #f1f5f9;
+}
+html.dark .news-card p.text-gray-500,
+html.dark .video-card p.text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+/* Dark mode popular services cards */
+html.dark #popular-services .service-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+html.dark #popular-services .service-card h3 {
+  color: #f1f5f9;
+}
+html.dark #popular-services .service-card .org {
+  color: #94a3b8;
+}
+
+/* Dark mode government services cards */
+html.dark #government-services .bg-white {
+  background-color: #1e293b !important;
+}
+html.dark #government-services h3 {
+  color: #f1f5f9;
+}
+html.dark #government-services ul li {
+  color: #cbd5e1;
+}
+
+/* Dark mode contact form */
+html.dark #contact .py-20 {
+  background-color: #0f172a !important;
+}
+
+/* style.css – MESOB Center custom styles */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Header gradient (replicated from original) */
+.bg-mesob-gradient {
+  background: linear-gradient(135deg, rgba(49, 78, 161, 0.95) 0%, rgba(30, 58, 138, 0.92) 50%, rgba(224, 222, 218, 0.88) 100%);
+}
+
+.about-section{
+  background:repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.85) 50%, rgba(30, 58, 138, 0.92) 0%, rgba(243, 243, 243, 0.88) 50%);
+}
+
+/* ========== Organization logo cards (FDRE style) ========== */
+.org-logo-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  aspect-ratio: 1;
+}
+
+.org-logo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.org-logo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-width: 80px;
+  max-height: 80px;
+}
+
+/* Dark mode for logo cards */
+html.dark .org-logo-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+/* Legacy org-card styles (kept for compatibility) */
+.org-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.org-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.org-card img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin: 0 auto 0.75rem;
+  display: block;
+}
+
+.org-card h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.3;
+  margin-bottom: 0.75rem;
+  min-height: 2.6em;
+}
+
+.org-card .org-btn {
+  display: inline-block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background: #1e3a8a;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.org-card .org-btn:hover {
+  background: #1e40af;
+}
+
+/* ========== Modal ========== */
+.org-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.org-modal.hidden {
+  display: none;
+}
+
+.org-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.org-modal-panel {
+  position: relative;
+  background: #fff;
+  border-radius: 1.25rem;
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.org-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.org-modal-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: none;
+  cursor: pointer;
+}
+
+.org-modal-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.org-modal-body {
+  padding: 1rem 1.25rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ========== Accordion ========== */
+.svc-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.svc-item.open {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.svc-toggle {
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.svc-toggle:hover {
+  background: #f3f4f6;
+}
+
+.svc-chevron {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6b7280;
+  transition: transform 0.25s ease;
+}
+
+.svc-item.open .svc-chevron {
+  transform: rotate(180deg);
+}
+
+.svc-panel {
+  display: none;
+  padding: 0 1.15rem 1.15rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.svc-item.open .svc-panel {
+  display: block;
+}
+
+.svc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0.85rem 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.svc-meta span {
+  color: #6b7280;
+}
+
+.svc-meta strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.svc-docs {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.55;
+}
+
+.svc-docs li {
+  margin-bottom: 0.35rem;
+}
+
+.svc-docs-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+
+.svc-link {
+  display: inline-block;
+  margin-top: 0.85rem;
+  padding: 0.45rem 1rem;
+  border-radius: 0.65rem;
+  background: #1e3a8a;
+  color: #fff !important;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.svc-link:hover {
+  background: #1e40af;
+}
+
+@media (max-width: 640px) {
+  .org-modal-panel {
+    max-height: 90vh;
+  }
+  .svc-toggle {
+    font-size: 0.875rem;
+  }
+}
+
+/* ========== Per-organization brand gradients ========== */
+
+.org-card {
+  border-top: 4px solid transparent;
+  background-image: linear-gradient(#fff, #fff), var(--org-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+}
+
+.org-card .org-btn {
+  background: var(--org-btn);
+  border: none;
+}
+
+.org-card .org-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* 1. Justice – deep navy / blue */
+.org-color-justice {
+  --org-gradient: linear-gradient(90deg, #1e3a8a, #3b82f6);
+  --org-btn: linear-gradient(135deg, #1e3a8a, #2563eb);
+}
+.org-color-justice .org-btn {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+}
+
+/* 2. Fayda (National ID) – green */
+.org-color-fayda {
+  --org-gradient: linear-gradient(90deg, #047857, #34d399);
+  --org-btn: linear-gradient(135deg, #047857, #10b981);
+}
+.org-color-fayda .org-btn {
+  background: linear-gradient(135deg, #047857, #10b981);
+}
+
+/* 3. Revenue – gold / amber */
+.org-color-revenue {
+  --org-gradient: linear-gradient(90deg, #b45309, #fbbf24);
+  --org-btn: linear-gradient(135deg, #b45309, #f59e0b);
+}
+.org-color-revenue .org-btn {
+  background: linear-gradient(135deg, #b45309, #f59e0b);
+}
+
+/* 4. Land & Investment – earth brown / olive */
+.org-color-land {
+  --org-gradient: linear-gradient(90deg, #78350f, #a3e635);
+  --org-btn: linear-gradient(135deg, #78350f, #65a30d);
+}
+.org-color-land .org-btn {
+  background: linear-gradient(135deg, #78350f, #65a30d);
+}
+
+/* 5. Labor & Skills – indigo */
+.org-color-labor {
+  --org-gradient: linear-gradient(90deg, #3730a3, #818cf8);
+  --org-btn: linear-gradient(135deg, #3730a3, #6366f1);
+}
+.org-color-labor .org-btn {
+  background: linear-gradient(135deg, #3730a3, #6366f1);
+}
+
+/* 6. CBE – purple (bank brand feel) */
+.org-color-cbe {
+  --org-gradient: linear-gradient(90deg, #5b21b6, #c084fc);
+  --org-btn: linear-gradient(135deg, #5b21b6, #7c3aed);
+}
+.org-color-cbe .org-btn {
+  background: linear-gradient(135deg, #5b21b6, #7c3aed);
+}
+
+/* 7. Sidama Bank – teal / cyan */
+.org-color-sidama-bank {
+  --org-gradient: linear-gradient(90deg, #0f766e, #2dd4bf);
+  --org-btn: linear-gradient(135deg, #0f766e, #14b8a6);
+}
+.org-color-sidama-bank .org-btn {
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
+}
+
+/* 8. Ethio Telecom – bright blue */
+.org-color-ethiotel {
+  --org-gradient: linear-gradient(90deg, #0369a1, #38bdf8);
+  --org-btn: linear-gradient(135deg, #0369a1, #0ea5e9);
+}
+.org-color-ethiotel .org-btn {
+  background: linear-gradient(135deg, #0369a1, #0ea5e9);
+}
+
+/* 9. Trade & Market – orange */
+.org-color-trade {
+  --org-gradient: linear-gradient(90deg, #c2410c, #fb923c);
+  --org-btn: linear-gradient(135deg, #c2410c, #ea580c);
+}
+.org-color-trade .org-btn {
+  background: linear-gradient(135deg, #c2410c, #ea580c);
+}
+
+/* 10. Ethiopost – red / yellow (postal colors) */
+.org-color-ethiopost {
+  --org-gradient: linear-gradient(90deg, #b91c1c, #facc15);
+  --org-btn: linear-gradient(135deg, #b91c1c, #eab308);
+}
+.org-color-ethiopost .org-btn {
+  background: linear-gradient(135deg, #b91c1c, #eab308);
+}
+
+/* 11. Electric – yellow / orange energy */
+.org-color-electric {
+  --org-gradient: linear-gradient(90deg, #ca8a04, #fde047);
+  --org-btn: linear-gradient(135deg, #ca8a04, #eab308);
+  color: #1f2937;
+}
+.org-color-electric .org-btn {
+  background: linear-gradient(135deg, #ca8a04, #eab308);
+  color: #1f2937;
+}
+
+/* 12. Urban Development – slate / sky */
+.org-color-urban {
+  --org-gradient: linear-gradient(90deg, #334155, #7dd3fc);
+  --org-btn: linear-gradient(135deg, #334155, #0ea5e9);
+}
+.org-color-urban .org-btn {
+  background: linear-gradient(135deg, #334155, #0ea5e9);
+}
+
+/* Decorative orbs for the about section */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.3;
+  pointer-events: none;
+}
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  top: -100px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(59,130,246,0.4), rgba(147,51,234,0.2));
+}
+.orb-2 {
+  width: 350px;
+  height: 350px;
+  bottom: -120px;
+  left: -120px;
+  background: radial-gradient(circle, rgba(99,102,241,0.3), rgba(59,130,246,0.2));
+}
+.orb-3 {
+  width: 150px;
+  height: 150px;
+  top: 30%;
+  right: 25%;
+  background: radial-gradient(circle, rgba(96,165,250,0.3), rgba(168,85,247,0.2));
+}
+.orb-4 {
+  width: 120px;
+  height: 120px;
+  bottom: 35%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(99,102,241,0.3), rgba(59,130,246,0.2));
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Blur glass helper */
+.bg-blur-glass {
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.85);
+}
+.dark .bg-blur-glass {
+  background: rgba(31, 41, 55, 0.85);
+}
+
+/* latest news */
+.news{
+  background:repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.85) 50%, rgba(30, 58, 138, 0.92) 0%, rgba(243, 243, 243, 0.88) 50%);
+}
+
+/* mesob services */
+.video-section{
+  background: #FFFFFF;
+}
+
+/* government services */
+.government{
+  background: #FFFFFF;
+}
+
+/* address */
+.Address{
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.85) 50%, rgba(30, 58, 138, 0.92) 0%, rgba(243, 243, 243, 0.88) 50%);
+}
+
+/* message */
+.message {
+  background: #FFFFFF;
+  color: black;
+}
+.message .contacts {
+  color: black;
+}
+
+/* popular-services */
+.popular-services{
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.85) 50%, rgba(30, 58, 138, 0.92) 0%, rgba(243, 243, 243, 0.88) 50%);
+}
+#popular-services {
+  padding: 4rem 0;
+}
+
+#popular-services .service-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+#popular-services .service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  border-color: #3b82f6;
+}
+
+#popular-services .service-image-box {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #eff6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+#popular-services .service-card:hover .icon-wrapper {
+  transform: scale(1.1);
+}
+
+#popular-services .service-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.25rem;
+}
+
+#popular-services .service-card .org {
+  color: #4b5563;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+/* Government Services Section */
+#government-services {
+    scroll-margin-top: 90px;
+}
+
+#government-services .service-card {
+    transition: all 0.4s ease;
+}
+
+#government-services .service-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+#government-services .service-icon {
+    transition: transform 0.4s ease;
+}
+
+#government-services .service-card:hover .service-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+#government-services .service-btn {
+    transition: all 0.3s ease;
+}
+
+#government-services .service-btn:hover {
+    transform: scale(1.05);
+}
+
+/* video card active state */
+.video-card.active {
+  border: 2px solid #3b82f6;
+}
+
+/* feature card hover */
+.feature-card {
+  transition: all 0.3s ease;
+}
+
+/* ===== Dashboard shared styles ===== */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4b5563;
+  transition: all 0.15s ease;
+}
+.sidebar-link:hover { background-color: #f3f4f6; color: #1e3a8a; }
+.sidebar-link.active { background-color: #eff6ff; color: #1e3a8a; }
+.stat-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #f3f4f6;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.table-container { overflow-x: auto; border-radius: 1rem; border: 1px solid #f3f4f6; background: white; }
+table.data-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+table.data-table th { text-align: left; padding: 0.875rem 1.25rem; background: #f9fafb; color: #6b7280; font-weight: 600; border-bottom: 1px solid #f3f4f6; }
+table.data-table td { padding: 0.875rem 1.25rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
+table.data-table tr:last-child td { border-bottom: none; }
+.badge { display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+@media (max-width: 1023px) {
+  .db-sidebar { transform: translateX(-100%); }
+  .db-sidebar.open { transform: translateX(0); }
+}
