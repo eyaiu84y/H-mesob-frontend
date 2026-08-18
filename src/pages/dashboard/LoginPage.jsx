@@ -8,8 +8,8 @@ const DEMO_ACCOUNTS = [
   { label: 'MESOB Manager',       email: 'manager@mesobcenter.et',    password: 'manager123', style: 'bg-red-50 hover:bg-red-100 text-red-800' },
   { label: 'Institution Manager', email: 'inst.manager@mesobcenter.et', password: 'inst123',  style: 'bg-orange-50 hover:bg-orange-100 text-orange-800' },
   { label: 'Employee',            email: 'employee@mesobcenter.et',   password: 'emp123',     style: 'bg-blue-50 hover:bg-blue-100 text-blue-800' },
-  { label: 'Technician',            email: 'ict@mesobcenter.et',        password: 'ict123',     style: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800' },
-  { label: 'Citizen',             email: 'citizen@example.com',       password: 'citizen123', style: 'bg-green-50 hover:bg-green-100 text-green-800' },
+  { label: 'Technician',          email: 'technician@mesobcenter.et', password: 'ict123',     style: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800' },
+  { label: 'Citizen',             email: 'citizen@mesobcenter.et',    password: 'citizen123', style: 'bg-green-50 hover:bg-green-100 text-green-800' },
 ];
 
 export default function LoginPage() {
@@ -19,11 +19,13 @@ export default function LoginPage() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [error, setError]       = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn && user) {
-      navigate(ROLE_ROUTES[user.role] || '/', { replace: true });
+      const targetRoute = ROLE_ROUTES[user.role] || '/';
+      navigate(targetRoute, { replace: true });
     }
   }, [isLoggedIn, user, navigate]);
 
@@ -35,12 +37,32 @@ export default function LoginPage() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    const result = login(email.trim(), password);
-    if (!result.success) {
-      setError(result.message);
-      return;
+    console.log('=== FORM SUBMIT ===');
+    console.log('Email:', email);
+    console.log('Password length:', password.length);
+    
+    setError('');
+    setIsSubmitting(true);
+    
+    try {
+      const result = login(email.trim(), password);
+      console.log('Login result:', result);
+      
+      if (!result.success) {
+        setError(result.message);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Navigate directly after successful login
+      const targetRoute = ROLE_ROUTES[result.user.role] || '/';
+      console.log('Navigating to:', targetRoute);
+      navigate(targetRoute, { replace: true });
+    } catch (err) {
+      console.error('Submit error:', err);
+      setError('An error occurred during login. Please try again.');
+      setIsSubmitting(false);
     }
-    navigate(ROLE_ROUTES[result.user.role] || '/', { replace: true });
   }
 
   return (
@@ -94,9 +116,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="w-full bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold py-3 rounded-xl transition shadow-md hover:shadow-lg"
+              disabled={isSubmitting}
+              className="w-full bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold py-3 rounded-xl transition shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign in
+              {isSubmitting ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
 

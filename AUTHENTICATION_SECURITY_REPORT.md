@@ -280,7 +280,7 @@ All demo login accounts still function correctly:
 | MESOB Manager | manager@mesobcenter.et | manager123 | /dashboard/mesob-manager |
 | Institution Manager | inst.manager@mesobcenter.et | inst123 | /dashboard/institution-manager |
 | Employee | employee@mesobcenter.et | emp123 | /dashboard/employee |
-| Technician | ict@mesobcenter.et | ict123 | /dashboard/technician |
+| Technician | technician@mesobcenter.et | ict123 | /dashboard/technician |
 | Citizen | citizen@example.com | citizen123 | /dashboard/citizen |
 
 ✅ **All demo accounts verified and working**

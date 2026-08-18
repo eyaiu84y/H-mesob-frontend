@@ -85,7 +85,7 @@ Try different roles with these demo accounts:
 | MESOB Manager | manager@mesobcenter.et | manager123 |
 | Institution Manager | inst.manager@mesobcenter.et | inst123 |
 | Employee | employee@mesobcenter.et | emp123 |
-| Technician | ict@mesobcenter.et | ict123 |
+| Technician | technician@mesobcenter.et | ict123 |
 | Citizen | citizen@example.com | citizen123 |
 
 > **Note:** These are demo accounts for testing purposes only.

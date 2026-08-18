@@ -37,7 +37,7 @@ const mockAnnouncements = [
 //   { id: 1, event: 'User login',          user: 'manager@mesobcenter.et',    role: 'mesob_manager',  time: 'Aug 14, 2026  09:14' },
 //   { id: 2, event: 'User login',          user: 'inst.manager@mesobcenter.et', role: 'institution_manager', time: 'Aug 14, 2026  09:02' },
 //   { id: 3, event: 'New user registered', user: 'new.employee@mesobcenter.et', role: 'employee',      time: 'Aug 13, 2026  16:45' },
-//   { id: 4, event: 'Role updated',        user: 'ict@mesobcenter.et',         role: 'technician',     time: 'Aug 12, 2026  11:30' },
+//   { id: 4, event: 'Role updated',        user: 'technician@mesobcenter.et',  role: 'technician',     time: 'Aug 12, 2026  11:30' },
 //   { id: 5, event: 'User login',          user: 'citizen@example.com',        role: 'citizen',        time: 'Aug 12, 2026  10:05' },
 // ];
 
@@ -53,8 +53,8 @@ function getStoredUsers() {
     { id: 2, name: 'MESOB Manager',       email: 'manager@mesobcenter.et',    role: 'mesob_manager',       status: 'Active' },
     { id: 3, name: 'Institution Manager', email: 'inst.manager@mesobcenter.et', role: 'institution_manager', status: 'Active' },
     { id: 4, name: 'Abebe Kebede',        email: 'employee@mesobcenter.et',   role: 'employee',            status: 'Active' },
-    { id: 5, name: 'Technician',          email: 'ict@mesobcenter.et',        role: 'technician',          status: 'Active' },
-    { id: 6, name: 'Sara Hailu',          email: 'citizen@example.com',       role: 'citizen',             status: 'Active' },
+    { id: 5, name: 'Technician',          email: 'technician@mesobcenter.et', role: 'technician',          status: 'Active' },
+    { id: 6, name: 'Citizen',             email: 'citizen@mesobcenter.et',    role: 'citizen',             status: 'Active' },
   ];
 }
 

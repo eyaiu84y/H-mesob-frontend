@@ -54,7 +54,7 @@ const mockAnnouncements = [
 const mockEmployees = [
   { id: 'E-04', name: 'Abebe Kebede',  email: 'employee@mesobcenter.et', role: 'Employee',  status: 'Active' },
   { id: 'E-07', name: 'Meron Tadesse', email: 'meron.t@mesobcenter.et', role: 'Employee',  status: 'Active' },
-  { id: 'T-05', name: 'Technician',   email: 'ict@mesobcenter.et',      role: 'Technician', status: 'Active' },
+  { id: 'T-05', name: 'Technician',   email: 'technician@mesobcenter.et', role: 'Technician', status: 'Active' },
 ];
 
 // ─── Badge helpers ────────────────────────────────────────────────

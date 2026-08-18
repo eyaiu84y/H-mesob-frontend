@@ -49,7 +49,12 @@ export default function DashboardLayout({ title, navLinks = [], accentColor = 'b
               <a
                 key={i}
                 href={link.href || '#'}
-                onClick={closeSidebar}
+                onClick={(e) => {
+                  if (link.onClick) {
+                    link.onClick(e);
+                  }
+                  closeSidebar();
+                }}
                 className={`sidebar-link${i === 0 ? ' active' : ''}`}
               >
                 {link.label}
