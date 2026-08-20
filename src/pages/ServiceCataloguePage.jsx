@@ -9,6 +9,7 @@ function ServiceItem({ svc }) {
   const [open, setOpen] = useState(false);
   const { t, lang } = useApp();
   const title = lang === 'am' ? svc.title_am : svc.title_en;
+  const description = lang === 'am' ? (svc.description_am || '') : (svc.description_en || '');
   const docs  = lang === 'am' ? svc.docs_am  : svc.docs_en;
 
   return (
@@ -21,6 +22,11 @@ function ServiceItem({ svc }) {
         </svg>
       </button>
       <div className="svc-panel">
+        {description && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+            {description}
+          </p>
+        )}
         <div className="svc-meta">
           <div><span>{t.org_time_label}</span><br /><strong>{svc.time}</strong></div>
           <div><span>{t.org_fee_label}</span><br /><strong>{svc.fee}</strong></div>
@@ -29,9 +35,12 @@ function ServiceItem({ svc }) {
         <ul className="svc-docs">
           {docs.map((doc, i) => <li key={i}>{doc}</li>)}
         </ul>
-        {svc.link && svc.link !== '#' && (
-          <a className="svc-link" href={svc.link} target="_blank" rel="noopener noreferrer">
-            {t.org_official}
+        {svc.officialUrl && svc.officialUrl !== '#' && (
+          <a className="svc-link" href={svc.officialUrl} target="_blank" rel="noopener noreferrer">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            {lang === 'am' ? 'ኦፊሴላዊ የአገልግሎት ድረ-ገጽን ይጎብኙ' : 'Visit Official Service Website'}
           </a>
         )}
       </div>
@@ -49,12 +58,15 @@ export default function ServiceCataloguePage() {
     return (
       org.name_en.toLowerCase().includes(q) ||
       org.name_am.toLowerCase().includes(q) ||
-      org.services.some((s) => s.title.toLowerCase().includes(q))
+      org.services.some((s) => 
+        s.title_en.toLowerCase().includes(q) || 
+        s.title_am.toLowerCase().includes(q)
+      )
     );
   });
 
   const displayName = (org) => lang === 'am' ? org.name_am : org.name_en;
-  const svcCount = (n) => `${n} ${n === 1 ? t.cat_service : t.cat_services}`;
+  const svcCount = (n) => `${n} ${n === 1 ? (lang === 'am' ? 'አገልግሎት' : 'service') : (lang === 'am' ? 'አገልግሎቶች' : 'services')}`;
 
   return (
     <>
@@ -63,15 +75,15 @@ export default function ServiceCataloguePage() {
 
         {/* Page Hero */}
         <div className="bg-mesob-gradient text-white py-14 px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">{t.cat_title}</h1>
-          <p className="text-white/80 text-lg mb-8">{t.cat_subtitle}</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-3">{t.cat_title || 'Service Catalogue'}</h1>
+          <p className="text-white/80 text-lg mb-8">{t.cat_subtitle || 'Browse all available services from government institutions'}</p>
           <div className="max-w-xl mx-auto">
             <div className="relative">
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t.cat_search_ph}
+                placeholder={t.cat_search_ph || 'Search services or institutions...'}
                 className="w-full px-6 py-4 pl-12 rounded-full text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 text-base shadow-lg"
               />
               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -87,7 +99,7 @@ export default function ServiceCataloguePage() {
         <div className="max-w-4xl mx-auto px-6 py-12 space-y-6">
           {filtered.length === 0 && (
             <div className="text-center text-gray-500 dark:text-gray-400 py-16 text-lg">
-              {t.cat_no_results} &ldquo;{search}&rdquo;
+              {t.cat_no_results || 'No results found for'} &ldquo;{search}&rdquo;
             </div>
           )}
 
@@ -104,7 +116,7 @@ export default function ServiceCataloguePage() {
                     src={org.image}
                     alt={displayName(org)}
                     className="w-14 h-14 object-contain rounded-xl flex-shrink-0 bg-gray-50 dark:bg-gray-700 p-1"
-                    onError={(e) => { e.target.src = '/image/image.jpg'; }}
+                    onError={(e) => { e.target.src = '/image/icon.png'; }}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-snug">
@@ -123,6 +135,21 @@ export default function ServiceCataloguePage() {
 
                 {isExpanded && (
                   <div className="px-6 pb-6 space-y-3 border-t border-gray-100 dark:border-gray-700 pt-4">
+                    {org.officialUrl && org.officialUrl !== '#' && (
+                      <div className="mb-4 pb-4 border-b border-gray-100 dark:border-gray-700">
+                        <a 
+                          href={org.officialUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          {lang === 'am' ? 'ኦፊሴላዊ ድረ-ገጽን ይጎብኙ' : 'Visit Official Website'}
+                        </a>
+                      </div>
+                    )}
                     {org.services.map((svc, i) => (
                       <ServiceItem key={i} svc={svc} />
                     ))}
@@ -138,7 +165,7 @@ export default function ServiceCataloguePage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
-            {t.cat_back}
+            {t.cat_back || '← Back to Home'}
           </Link>
         </div>
 

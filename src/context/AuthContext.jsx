@@ -3,12 +3,26 @@ import { createContext, useContext, useState } from 'react';
 
 // Constants extracted to separate exports to avoid react-refresh warnings
 const DEMO_USERS = [
-  { id: 1, name: "Super Admin",          email: "superadmin@mesobcenter.et", password: "super123",   role: "super_admin" },
-  { id: 2, name: "MESOB Manager",        email: "manager@mesobcenter.et",    password: "manager123", role: "mesob_manager" },
-  { id: 3, name: "Institution Manager",  email: "inst.manager@mesobcenter.et", password: "inst123",  role: "institution_manager" },
-  { id: 4, name: "Abebe Kebede",         email: "employee@mesobcenter.et",   password: "emp123",     role: "employee" },
-  { id: 5, name: "Technician",           email: "technician@mesobcenter.et", password: "ict123",     role: "technician"  },
-  { id: 6, name: "Citizen",              email: "citizen@mesobcenter.et",    password: "citizen123", role: "citizen" },
+  { id: 1, name: "Super Admin",          email: "superadmin@mesobcenter.et",      password: "super123",   role: "super_admin",         employeeId: "EMP-001", institution: null },
+  { id: 2, name: "MESOB Manager",        email: "manager@mesobcenter.et",         password: "manager123", role: "mesob_manager",       employeeId: "EMP-002", institution: null },
+  
+  // National ID Program
+  { id: 3, name: "Institution Manager",  email: "inst.manager@mesobcenter.et",    password: "inst123",    role: "institution_manager", employeeId: "EMP-003", institution: "National ID Program" },
+  { id: 4, name: "Abebe Kebede",         email: "employee@mesobcenter.et",        password: "emp123",     role: "employee",            employeeId: "EMP-004", institution: "National ID Program" },
+  { id: 5, name: "Technician",           email: "technician@mesobcenter.et",      password: "ict123",     role: "technician",          employeeId: "TECH-001", institution: "National ID Program" },
+  
+  // Commercial Bank of Ethiopia (CBE)
+  { id: 7, name: "Yonas Tadesse",        email: "cbe.manager@mesobcenter.et",     password: "cbe123",     role: "institution_manager", employeeId: "EMP-007", institution: "Commercial Bank of Ethiopia" },
+  { id: 8, name: "Meron Alemu",          email: "cbe.employee@mesobcenter.et",    password: "cbe123",     role: "employee",            employeeId: "EMP-008", institution: "Commercial Bank of Ethiopia" },
+  { id: 9, name: "Solomon Bekele",       email: "cbe.technician@mesobcenter.et",  password: "cbe123",     role: "technician",          employeeId: "TECH-002", institution: "Commercial Bank of Ethiopia" },
+  
+  // Ethio Telecom
+  { id: 10, name: "Tigist Worku",        email: "ethiotel.manager@mesobcenter.et",  password: "ethio123",   role: "institution_manager", employeeId: "EMP-010", institution: "Ethio Telecom" },
+  { id: 11, name: "Dawit Haile",         email: "ethiotel.employee@mesobcenter.et", password: "ethio123",   role: "employee",            employeeId: "EMP-011", institution: "Ethio Telecom" },
+  { id: 12, name: "Hanna Tesfaye",       email: "ethiotel.technician@mesobcenter.et", password: "ethio123", role: "technician",          employeeId: "TECH-003", institution: "Ethio Telecom" },
+  
+  // Citizen (no institution)
+  { id: 6, name: "Citizen",              email: "citizen@mesobcenter.et",         password: "citizen123", role: "citizen",             employeeId: null, institution: null },
 ];
 
 const AuthContext = createContext(null);
@@ -114,7 +128,14 @@ export function AuthProvider({ children }) {
         return { success: false, message: "Invalid user role. Please contact support." };
       }
       
-      const sessionUser = { id: found.id, name: found.name, email: found.email, role: found.role };
+      const sessionUser = { 
+        id: found.id, 
+        name: found.name, 
+        email: found.email, 
+        role: found.role,
+        employeeId: found.employeeId || null,
+        institution: found.institution || null
+      };
       console.log('Session user created:', sessionUser);
       
       localStorage.setItem('mesob_auth', JSON.stringify(sessionUser));
@@ -163,7 +184,14 @@ export function AuthProvider({ children }) {
     };
     users.push(newUser);
     saveUsers(users);
-    const sessionUser = { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role };
+    const sessionUser = { 
+      id: newUser.id, 
+      name: newUser.name, 
+      email: newUser.email, 
+      role: newUser.role,
+      employeeId: `EMP-${Date.now().toString().slice(-4)}`,
+      institution: null
+    };
     localStorage.setItem('mesob_auth', JSON.stringify(sessionUser));
     setUser(sessionUser);
     return { success: true, message: "Account created successfully.", user: sessionUser };

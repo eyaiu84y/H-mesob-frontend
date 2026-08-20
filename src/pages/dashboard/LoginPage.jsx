@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth, ROLE_ROUTES } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
@@ -13,7 +13,7 @@ const DEMO_ACCOUNTS = [
 ];
 
 export default function LoginPage() {
-  const { login, isLoggedIn, user } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail]       = useState('');
@@ -21,13 +21,8 @@ export default function LoginPage() {
   const [error, setError]       = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isLoggedIn && user) {
-      const targetRoute = ROLE_ROUTES[user.role] || '/';
-      navigate(targetRoute, { replace: true });
-    }
-  }, [isLoggedIn, user, navigate]);
+  // Don't auto-redirect - let users access login page even if logged in
+  // This allows switching accounts without manual logout
 
   function fillDemo(demoEmail, demoPassword) {
     setEmail(demoEmail);
@@ -71,10 +66,15 @@ export default function LoginPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#1e3a8a] text-white mb-4 shadow-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
+          <div
+            className="inline-flex items-center justify-center w-24 h-24 overflow-hidden mb-4"
+            style={{ transform: 'rotate(157.05deg) translateZ(0px)' }}
+          >
+            <img
+              src="/image/logo.jpg"
+              alt="MESOB Logo"
+              className="w-20 h-20 object-contain transition-all duration-300 hover:drop-shadow-lg block"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">HAWASSA MESOB</h1>
           <p className="text-gray-500 mt-1">Sign in to your account</p>

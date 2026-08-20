@@ -1,350 +1,300 @@
-# Data Cleanup & Management Guide
+# Mock Data Cleanup & Supabase Integration Guide
 
-## Overview
-This guide explains how to manage demo accounts, clean up unnecessary data, and handle localStorage in the Hawassa MESOB application.
-
----
-
-## ✅ COMPLETED: Removed Citizen Demo Account (Sara Hailu)
-
-The Citizen demo account has been removed from the system.
-
-### Files Modified:
-1. ✅ `src/context/AuthContext.jsx` - Removed from DEMO_USERS
-2. ✅ `src/pages/dashboard/LoginPage.jsx` - Removed from DEMO_ACCOUNTS  
-3. ✅ `src/pages/dashboard/SuperAdminDashboard.jsx` - Removed from user list
-
-### Current Demo Accounts (5 total):
-| Role | Name | Email | Password |
-|------|------|-------|----------|
-| Super Admin | Super Admin | superadmin@mesobcenter.et | super123 |
-| MESOB Manager | MESOB Manager | manager@mesobcenter.et | manager123 |
-| Institution Manager | Institution Manager | inst.manager@mesobcenter.et | inst123 |
-| Employee | Abebe Kebede | employee@mesobcenter.et | emp123 |
-| Technician | Technician | technician@mesobcenter.et | ict123 |
+**Date:** August 20, 2026  
+**Status:** Phase 1 - Complete Audit Done ✅
 
 ---
 
-## 🗂️ Data Storage Locations
+## Executive Summary
 
-### 1. **Code-Level Data (Authoritative)**
-**Location:** `src/context/AuthContext.jsx`
-
-```javascript
-const DEMO_USERS = [
-  { id: 1, name: "Super Admin", email: "superadmin@mesobcenter.et", password: "super123", role: "super_admin" },
-  // ... more users
-];
-```
-
-**What it contains:**
-- Built-in demo accounts
-- These are the authoritative source
-- Always used first (overrides localStorage cache)
-
-### 2. **localStorage Data (Browser Storage)**
-
-#### `mesob_auth` - Current Session
-```javascript
-// Stores currently logged-in user
-{
-  "id": 1,
-  "name": "Super Admin",
-  "email": "superadmin@mesobcenter.et",
-  "role": "super_admin"
-}
-```
-
-**When it's created:** User logs in  
-**When it's removed:** User logs out  
-**Purpose:** Track current session
-
-#### `mesob_users` - User Database
-```javascript
-// Stores ALL users (demo + custom signups)
-[
-  { id: 1, name: "Super Admin", email: "superadmin@mesobcenter.et", password: "super123", role: "super_admin" },
-  { id: 1234567890, name: "John Doe", email: "john@example.com", password: "custom123", role: "citizen" },
-  // ... more users
-]
-```
-
-**When it's created:** First signup occurs  
-**What it contains:** Demo users + custom signup users  
-**Note:** Demo users in localStorage are automatically filtered and replaced with current code versions
+This document tracks the comprehensive removal of ALL mock/demo/fake data from the H-MESOB frontend application and integration with real Supabase backend. The project currently has **NO backend** - everything uses localStorage and in-memory mock data.
 
 ---
 
-## 🧹 How to Clean Up Data
+## Current State Analysis
 
-### Method 1: Clear Specific Data (Browser Console)
+### ❌ Backend Status: NOT CONFIGURED
 
-**Open Browser DevTools (F12) → Console:**
+**Critical Finding:** Supabase is NOT installed or configured
+- No `@supabase/supabase-js` dependency in package.json
+- No Supabase client initialization found
+- No services/api directory exists
+- No `.env` configuration for Supabase credentials
 
-```javascript
-// Clear current session only
-localStorage.removeItem('mesob_auth');
+### 📊 Mock Data Audit Results
 
-// Clear user database only
-localStorage.removeItem('mesob_users');
+#### **Core Data Management Files:**
 
-// Clear all MESOB data
-localStorage.removeItem('mesob_auth');
-localStorage.removeItem('mesob_users');
+1. **`src/context/AuthContext.jsx`**
+   - `DEMO_USERS` array (12 demo users with hard-coded credentials)
+   - `getUsers()` / `saveUsers()` localStorage-based user management
+   - Mock authentication system (no real auth)
+   - **Status:** NEEDS REPLACEMENT with Supabase Auth
 
-// Refresh page
-location.reload();
-```
+2. **`src/utils/sharedData.js`**
+   - `MAINTENANCE_REPORTS_KEY` localStorage-based reports
+   - `MAINTENANCE_TASKS_KEY` localStorage-based tasks
+   - `ANNOUNCEMENTS_KEY` localStorage-based announcements
+   - Functions: `getMaintenanceReports()`, `createMaintenanceReport()`, `updateMaintenanceReport()`
+   - Functions: `getMaintenanceTasks()`, `createMaintenanceTask()`, `updateMaintenanceTask()`
+   - Functions: `getAnnouncements()`, `createAnnouncement()`, `markAnnouncementRead()`
+   - **Status:** NEEDS REPLACEMENT with Supabase queries
 
-### Method 2: Clear All Browser Data
+#### **Dashboard-Specific Mock Data:**
 
-**For complete reset:**
-```javascript
-localStorage.clear();
-location.reload();
-```
+3. **`src/pages/dashboard/EmployeeDashboard.jsx`**
+   - `mockQueue` (4 queue items)
+   - `mockApplications` (4 applications)
+   - Hard-coded statistics (14 in queue, 27 processed)
+   - **Status:** NEEDS REPLACEMENT
 
-### Method 3: Browser Settings
+4. **`src/pages/dashboard/InstitutionManagerDashboard.jsx`**
+   - `mockQueue` (5 queue items)
+   - `mockApplications` (5 applications)
+   - `mockMaintenanceTasks` (3 tasks)
+   - `mockAnnouncements` (3 announcements)
+   - `mockEmployees` (3 employees)
+   - **Status:** NEEDS REPLACEMENT
 
-**Chrome/Edge:**
-1. Press `F12` → Application tab
-2. Storage → Local Storage → http://localhost:5173
-3. Right-click → Clear
-4. Refresh page
+5. **`src/pages/dashboard/MesobManagerDashboard.jsx`**
+   - `mockInstitutionStats` (12 institutions with stats)
+   - `mockQueueItems` (7 queue items)
+   - `mockApplications` (7 applications)
+   - `mockMaintenanceItems` (5 maintenance tasks)
+   - **Status:** NEEDS REPLACEMENT
 
-**Firefox:**
-1. Press `F12` → Storage tab
-2. Local Storage → http://localhost:5173
-3. Right-click → Delete All
-4. Refresh page
+6. **`src/pages/dashboard/CitizenDashboard.jsx`**
+   - Hard-coded application data (7 applications in table)
+   - Hard-coded statistics (2 active, 5 completed)
+   - Hard-coded announcements (4 announcements)
+   - **Status:** NEEDS REPLACEMENT
+
+7. **`src/pages/dashboard/ICTStaffDashboard.jsx`**
+   - Uses `getMaintenanceTasks()` from sharedData (OK pattern)
+   - Uses `getAnnouncements()` from sharedData (OK pattern)
+   - **Status:** WILL WORK after sharedData.js is fixed
+
+8. **`src/pages/dashboard/SuperAdminDashboard.jsx`**
+   - `mockAnnouncements` (3 system announcements)
+   - `getStoredUsers()` from localStorage
+   - Uses `organizationsData` (may be legitimate config)
+   - **Status:** NEEDS PARTIAL REPLACEMENT
+
+#### **Static Configuration Data (May Be Legitimate):**
+
+9. **`src/data/organizations.js`**
+   - Institution definitions with services
+   - **Status:** REVIEW - May be system configuration, not mock data
+
+10. **`src/data/services.js`**
+    - Service catalog definitions
+    - **Status:** REVIEW - May be system configuration, not mock data
 
 ---
 
-## 📝 When to Clean Up Data
+## Implementation Phases
 
-### Scenario 1: Testing Fresh Login
-**Problem:** Already logged in, can't see login page  
-**Solution:**
-```javascript
-localStorage.removeItem('mesob_auth');
-location.reload();
+### ✅ **Phase 1: Complete Audit** (DONE)
+- [x] Read all dashboard files
+- [x] Document all mock data locations
+- [x] Classify data types
+- [x] Identify dependencies
+
+### 🔄 **Phase 2: Supabase Setup** (IN PROGRESS)
+
+#### Step 2.1: Install Supabase Dependency
+```bash
+npm install @supabase/supabase-js
 ```
 
-### Scenario 2: Old Demo Users Cached
-**Problem:** Updated demo account in code but old version still used  
-**Solution:** Not needed! The system automatically uses current code versions
-
-### Scenario 3: Remove All Custom Signups
-**Problem:** Want to reset to only demo accounts  
-**Solution:**
-```javascript
-localStorage.removeItem('mesob_users');
-location.reload();
+#### Step 2.2: Configure Environment Variables
+Create `.env` file:
+```env
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### Scenario 4: Complete System Reset
-**Problem:** Want to start completely fresh  
-**Solution:**
-```javascript
-localStorage.clear();
-location.reload();
+#### Step 2.3: Create Supabase Client
+Create `src/lib/supabaseClient.js`
+
+#### Step 2.4: Update .gitignore
+```gitignore
+.env
+.env.local
+.env.production
 ```
+
+### ⏳ **Phase 3: Database Schema Design**
+
+#### Required Tables:
+- `profiles` - User profiles
+- `institutions` - Institution details
+- `maintenance_reports` - Employee maintenance reports
+- `maintenance_tasks` - Technician tasks
+- `queue` - Service queue
+- `applications` - Citizen applications
+- `announcements` - System/Institution announcements
+- `services` - Service catalog
+- `organizations` - Institution configurations
+
+#### Security:
+- Row-Level Security (RLS) policies for all tables
+- Role-based access control
+- Institution-based data isolation
+
+### ⏳ **Phase 4: Services Layer Creation**
+
+Create API service files:
+- `src/services/authService.js` - Supabase Auth
+- `src/services/maintenanceService.js` - Reports & Tasks
+- `src/services/institutionService.js` - Institutions
+- `src/services/queueService.js` - Queue management
+- `src/services/applicationService.js` - Applications
+- `src/services/announcementService.js` - Announcements
+
+### ⏳ **Phase 5: Replace Mock Data (Per Dashboard)**
+
+**Priority Order:**
+1. Employee Dashboard (simplest, good test case)
+2. Institution Manager Dashboard (core functionality)
+3. ICT Staff Dashboard (already uses shared data)
+4. Citizen Dashboard
+5. MESOB Manager Dashboard (most complex)
+6. Super Admin Dashboard (system-wide)
+
+### ⏳ **Phase 6: Testing & Validation**
+
+**Test Cases:**
+- [ ] User authentication with real credentials
+- [ ] Data persistence after browser refresh
+- [ ] Data isolation (institution-based)
+- [ ] Role-based access control
+- [ ] CRUD operations for all entities
+- [ ] Loading states
+- [ ] Error handling
+- [ ] Empty states
 
 ---
 
-## 🔧 How to Add/Remove Demo Accounts
+## Mock Data Removal Checklist
 
-### Remove a Demo Account
+### 🔴 High Priority (Core System)
+- [ ] Remove `DEMO_USERS` from AuthContext.jsx
+- [ ] Replace localStorage user management
+- [ ] Remove all mock data from `sharedData.js`
+- [ ] Implement real Supabase authentication
 
-**Example: Remove Technician account**
+### 🟡 Medium Priority (Dashboard Data)
+- [ ] Replace Employee Dashboard mock data
+- [ ] Replace Institution Manager Dashboard mock data
+- [ ] Replace MESOB Manager Dashboard mock data
+- [ ] Replace Citizen Dashboard mock data
+- [ ] Replace Super Admin Dashboard mock data
 
-1. **Edit `src/context/AuthContext.jsx`:**
-   ```javascript
-   const DEMO_USERS = [
-     { id: 1, name: "Super Admin", ... },
-     { id: 2, name: "MESOB Manager", ... },
-     // Remove Technician line
-     { id: 4, name: "Abebe Kebede", ... },
-   ];
-   ```
+### 🟢 Low Priority (Configuration)
+- [ ] Review `organizations.js` - keep if config
+- [ ] Review `services.js` - keep if config
 
-2. **Edit `src/pages/dashboard/LoginPage.jsx`:**
-   ```javascript
-   const DEMO_ACCOUNTS = [
-     { label: 'Super Admin', ... },
-     { label: 'MESOB Manager', ... },
-     // Remove Technician line
-     { label: 'Employee', ... },
-   ];
-   ```
+---
 
-3. **Edit `src/pages/dashboard/SuperAdminDashboard.jsx`:**
-   Remove from the hardcoded user list
+## Technical Debt to Address
 
-4. **Build:**
+1. **No Real Authentication:** Currently using demo credentials
+2. **No Data Persistence:** Everything in localStorage
+3. **No Backend Validation:** All validation is client-side
+4. **No Data Relationships:** No foreign keys or referential integrity
+5. **No Audit Trail:** No tracking of who changed what
+6. **No File Upload:** Photos stored as base64 in localStorage
+7. **No Search/Filter Backend:** All filtering done client-side
+
+---
+
+## Security Considerations
+
+### Current Issues:
+- ❌ Passwords stored in plain text (DEMO_USERS)
+- ❌ No authentication tokens
+- ❌ No session management
+- ❌ No API authorization
+- ❌ No data encryption
+
+### Required Security:
+- ✅ Supabase Auth with JWT tokens
+- ✅ Row-Level Security policies
+- ✅ Secure password hashing
+- ✅ Role-based access control
+- ✅ Institution-based data isolation
+- ✅ Audit logging
+
+---
+
+## File Tracking
+
+### Files to Create:
+- [ ] `src/lib/supabaseClient.js`
+- [ ] `src/services/authService.js`
+- [ ] `src/services/maintenanceService.js`
+- [ ] `src/services/institutionService.js`
+- [ ] `src/services/queueService.js`
+- [ ] `src/services/applicationService.js`
+- [ ] `src/services/announcementService.js`
+- [ ] `.env`
+
+### Files to Modify:
+- [ ] `src/context/AuthContext.jsx` (replace DEMO_USERS)
+- [ ] `src/utils/sharedData.js` (replace localStorage)
+- [ ] `src/pages/dashboard/EmployeeDashboard.jsx`
+- [ ] `src/pages/dashboard/InstitutionManagerDashboard.jsx`
+- [ ] `src/pages/dashboard/MesobManagerDashboard.jsx`
+- [ ] `src/pages/dashboard/CitizenDashboard.jsx`
+- [ ] `src/pages/dashboard/ICTStaffDashboard.jsx`
+- [ ] `src/pages/dashboard/SuperAdminDashboard.jsx`
+- [ ] `.gitignore` (add .env)
+
+### Files to Review (May Keep):
+- [ ] `src/data/organizations.js`
+- [ ] `src/data/services.js`
+
+---
+
+## Next Steps
+
+**IMMEDIATE ACTION REQUIRED:**
+
+1. **Install Supabase:**
    ```bash
-   npm run build
+   npm install @supabase/supabase-js
    ```
 
-### Add a New Demo Account
+2. **User must provide Supabase credentials:**
+   - Create Supabase project at https://supabase.com
+   - Get Project URL and Anon Key
+   - Provide credentials to create .env file
 
-**Example: Add Auditor role**
+3. **Create Supabase client configuration**
 
-1. **Add role to VALID_ROLES in `AuthContext.jsx`:**
-   ```javascript
-   const VALID_ROLES = ['super_admin', 'mesob_manager', 'institution_manager', 'employee', 'technician', 'auditor'];
-   ```
+4. **Design and implement database schema**
 
-2. **Add to DEMO_USERS:**
-   ```javascript
-   const DEMO_USERS = [
-     // ... existing users
-     { id: 7, name: "Auditor", email: "auditor@mesobcenter.et", password: "audit123", role: "auditor" },
-   ];
-   ```
+5. **Build services layer**
 
-3. **Add to ROLE_ROUTES:**
-   ```javascript
-   export const ROLE_ROUTES = {
-     // ... existing routes
-     auditor: "/dashboard/auditor",
-   };
-   ```
-
-4. **Add to LoginPage DEMO_ACCOUNTS:**
-   ```javascript
-   { label: 'Auditor', email: 'auditor@mesobcenter.et', password: 'audit123', style: 'bg-yellow-50 hover:bg-yellow-100 text-yellow-800' },
-   ```
-
-5. **Create dashboard:** `src/pages/dashboard/AuditorDashboard.jsx`
-
-6. **Add route in `App.jsx`:**
-   ```javascript
-   <Route
-     path="/dashboard/auditor"
-     element={
-       <RequireAuth allowedRoles={['auditor']}>
-         <AuditorDashboard />
-       </RequireAuth>
-     }
-   />
-   ```
+6. **Start replacing dashboard mock data**
 
 ---
 
-## 🛡️ Data Persistence Behavior
+## Success Criteria
 
-### What Persists Across Page Refresh:
-✅ **Current session** (`mesob_auth`) - User stays logged in  
-✅ **Custom signup users** (`mesob_users`) - Preserved  
-
-### What Gets Reset:
-❌ **Demo accounts in localStorage** - Automatically replaced with current code  
-❌ **Invalid sessions** - Cleared automatically  
-
-### How the System Works:
-
-1. **On Login:**
-   - Checks credentials against `getUsers()`
-   - `getUsers()` returns: Current DEMO_USERS + custom signup users
-   - Creates session in `mesob_auth`
-
-2. **On Page Refresh:**
-   - Reads `mesob_auth`
-   - Validates session
-   - If valid: Stays logged in
-   - If invalid: Cleared, shows login page
-
-3. **On Signup:**
-   - Adds new user to `mesob_users`
-   - Creates session in `mesob_auth`
-   - Custom user preserved for future logins
+✅ **Complete when:**
+- [ ] No mock data in any dashboard
+- [ ] All data persists in Supabase
+- [ ] Real authentication working
+- [ ] All CRUD operations functional
+- [ ] Loading/error states implemented
+- [ ] Data isolation working (institution-based)
+- [ ] RBAC enforced via RLS policies
+- [ ] All tests passing
+- [ ] Documentation updated
 
 ---
 
-## 🚨 Important Notes
-
-### Demo Account Protection:
-- **Demo emails are protected** - Users cannot signup with demo emails
-- **Demo accounts always authoritative** - Code versions always used
-- **No localStorage conflicts** - Outdated cached demo users automatically filtered
-
-### Custom Users:
-- **Preserved independently** - Stored in `mesob_users`
-- **Not overridden by demos** - Kept separate from demo accounts
-- **Persist across updates** - Code changes don't affect custom users
-
-### When Updates Take Effect:
-- **Code changes** - Immediate (next page load)
-- **Demo account updates** - Immediate (no cache clearing needed)
-- **Role changes** - Require code rebuild (`npm run build`)
-
----
-
-## 📊 Current System State
-
-### Active Demo Accounts: **5**
-1. Super Admin
-2. MESOB Manager  
-3. Institution Manager
-4. Employee
-5. Technician
-
-### Removed Demo Accounts: **1**
-1. ~~Citizen (Sara Hailu)~~ ✅ Removed
-
-### Active Roles: **5**
-- `super_admin`
-- `mesob_manager`
-- `institution_manager`
-- `employee`
-- `technician`
-
-### Citizen Role Status:
-- ✅ Still available as a role option for signup
-- ✅ Citizen dashboard still exists
-- ✅ Users can signup as Citizens
-- ❌ No pre-made Citizen demo account
-
----
-
-## 🔄 Maintenance Checklist
-
-### Regular Cleanup (Optional):
-- [ ] Review custom signups in `mesob_users`
-- [ ] Remove test accounts created during development
-- [ ] Verify demo accounts match current requirements
-
-### After Code Updates:
-- [x] Demo accounts automatically use current code ✅
-- [ ] Test login with each demo account
-- [ ] Verify role-based routing
-- [ ] Check dashboard access
-
-### Before Production:
-- [ ] Remove or change demo passwords
-- [ ] Consider removing demo accounts entirely
-- [ ] Add proper backend authentication
-- [ ] Implement real user database
-
----
-
-## 🎯 Summary
-
-### ✅ What You Just Did:
-- Removed Sara Hailu (Citizen) demo account
-- Kept 5 essential demo accounts
-- System still allows Citizen role via signup
-- No localStorage manual clearing needed
-
-### 📌 Remember:
-- Demo accounts in code are always authoritative
-- Custom signups are preserved separately  
-- No need to manually clear cache after code updates
-- The system handles data conflicts automatically
-
-### 🚀 Next Steps (Optional):
-1. Test all remaining demo logins work
-2. Test signup with Citizen role still works
-3. Consider which roles need demo accounts
-4. Plan for production authentication system
+**Last Updated:** August 20, 2026  
+**Next Review:** After Supabase installation

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth, ROLE_LABELS, ROLE_BADGE } from '../../context/AuthContext';
 import { organizationsData } from '../../data/organizations';
+import { getAnnouncements, createAnnouncement } from '../../utils/sharedData';
 
 // ─── Navigation sections ──────────────────────────────────────────
 const SECTIONS = [
@@ -303,33 +304,529 @@ function SectionUserManagement() {
 // ─── SECTION: Institution Management ─────────────────────────────
 function SectionInstitutionManagement() {
   // RBAC: Only super_admin may create/modify institutions.
-  // This is enforced at route level (RequireAuth) AND here as a
-  // defence-in-depth check so the Add Institution UI cannot be
-  // reached even if the component were ever rendered in another context.
   const { user } = useAuth();
   const canCreate = user?.role === 'super_admin';
   const [institutions, setInstitutions] = useState(
     organizationsData.map(o => ({ ...o, status: 'Active' }))
   );
-  const [form, setForm] = useState({ name_en: '', name_am: '', show: false });
+  const [view, setView] = useState('list'); // 'list' | 'new'
+  const [form, setForm] = useState({
+    name_en: '',
+    name_am: '',
+    image: '',
+    imagePreview: '',
+    description: '',
+    details: '',
+    officialUrl: '',
+    services: [],
+  });
   const [formError, setFormError] = useState('');
 
-  function addInstitution(e) {
-    e.preventDefault();
-    if (!form.name_en.trim()) { setFormError('English name is required.'); return; }
-    setInstitutions(prev => [...prev, {
-      id: `custom-${Date.now()}`, name_en: form.name_en.trim(),
-      name_am: form.name_am.trim() || form.name_en.trim(),
-      image: '', services: [], status: 'Active',
-    }]);
-    setForm({ name_en: '', name_am: '', show: false });
+  // Service form state
+  const [serviceForm, setServiceForm] = useState({
+    title_en: '',
+    title_am: '',
+    time: '',
+    fee: '',
+    officialUrl: '',
+    docs_en: [],
+    docs_am: [],
+  });
+  const [editingServiceIndex, setEditingServiceIndex] = useState(null);
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [docInput, setDocInput] = useState({ en: '', am: '' });
+
+  function handleImageSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setFormError('Please select a valid image file.');
+      return;
+    }
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm(f => ({
+        ...f,
+        image: `/image/${file.name}`,
+        imagePreview: reader.result
+      }));
+      setFormError('');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function addDocument() {
+    if (!docInput.en.trim()) {
+      setFormError('English document name is required.');
+      return;
+    }
+    setServiceForm(f => ({
+      ...f,
+      docs_en: [...f.docs_en, docInput.en.trim()],
+      docs_am: [...f.docs_am, docInput.am.trim() || docInput.en.trim()],
+    }));
+    setDocInput({ en: '', am: '' });
     setFormError('');
+  }
+
+  function removeDocument(index) {
+    setServiceForm(f => ({
+      ...f,
+      docs_en: f.docs_en.filter((_, i) => i !== index),
+      docs_am: f.docs_am.filter((_, i) => i !== index),
+    }));
+  }
+
+  function validateService() {
+    if (!serviceForm.title_en.trim()) return 'Service name is required.';
+    if (serviceForm.docs_en.length === 0) return 'At least one required document must be added.';
+    if (!serviceForm.time.trim()) return 'Processing time is required.';
+    if (!serviceForm.fee.trim()) return 'Service fee is required.';
+    if (serviceForm.officialUrl && !/^https?:\/\/.+/.test(serviceForm.officialUrl)) {
+      return 'Invalid service website URL.';
+    }
+    return null;
+  }
+
+  function saveService() {
+    const error = validateService();
+    if (error) {
+      setFormError(error);
+      return;
+    }
+
+    if (editingServiceIndex !== null) {
+      // Update existing service
+      setForm(f => ({
+        ...f,
+        services: f.services.map((s, i) => i === editingServiceIndex ? { ...serviceForm } : s)
+      }));
+    } else {
+      // Add new service
+      setForm(f => ({
+        ...f,
+        services: [...f.services, { ...serviceForm }]
+      }));
+    }
+
+    // Reset service form
+    setServiceForm({
+      title_en: '',
+      title_am: '',
+      time: '',
+      fee: '',
+      officialUrl: '',
+      docs_en: [],
+      docs_am: [],
+    });
+    setEditingServiceIndex(null);
+    setShowServiceForm(false);
+    setFormError('');
+  }
+
+  function editService(index) {
+    setServiceForm({ ...form.services[index] });
+    setEditingServiceIndex(index);
+    setShowServiceForm(true);
+  }
+
+  function removeService(index) {
+    setForm(f => ({
+      ...f,
+      services: f.services.filter((_, i) => i !== index)
+    }));
+  }
+
+  function validateInstitution() {
+    if (!form.name_en.trim()) return 'Institution name is required.';
+    if (!form.image) return 'Institution logo is required.';
+    if (!form.description.trim()) return 'Institution description is required.';
+    if (!form.details.trim()) return 'Institution details are required.';
+    if (!form.officialUrl.trim()) return 'Official website is required.';
+    if (!/^https?:\/\/.+/.test(form.officialUrl)) return 'Invalid official website URL.';
+    if (form.services.length === 0) return 'At least one service must be added.';
+    return null;
+  }
+
+  function saveInstitution(e) {
+    e.preventDefault();
+    
+    const error = validateInstitution();
+    if (error) {
+      setFormError(error);
+      return;
+    }
+
+    const newInstitution = {
+      id: `custom-${Date.now()}`,
+      name_en: form.name_en.trim(),
+      name_am: form.name_am.trim() || form.name_en.trim(),
+      image: form.image,
+      description: form.description.trim(),
+      details: form.details.trim(),
+      officialUrl: form.officialUrl.trim(),
+      services: form.services,
+      status: 'Active',
+    };
+
+    setInstitutions(prev => [...prev, newInstitution]);
+    
+    // Reset form
+    setForm({
+      name_en: '',
+      name_am: '',
+      image: '',
+      imagePreview: '',
+      description: '',
+      details: '',
+      officialUrl: '',
+      services: [],
+    });
+    setFormError('');
+    setView('list');
+    
+    alert('Institution created successfully!');
   }
 
   function toggleStatus(id) {
     setInstitutions(prev => prev.map(o => o.id === id ? { ...o, status: o.status === 'Active' ? 'Inactive' : 'Active' } : o));
   }
 
+  // New Institution Form View
+  if (view === 'new' && canCreate) {
+    return (
+      <>
+        <div className="mb-6">
+          <button onClick={() => { setView('list'); setFormError(''); setShowServiceForm(false); }} 
+            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Institutions
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-4xl">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Add New Institution</h2>
+          
+          <form onSubmit={saveInstitution} className="space-y-6">
+            {/* Institution Information */}
+            <div className="border-b border-gray-200 pb-6">
+              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Institution Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Institution Name (English) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name_en}
+                    onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))}
+                    placeholder="e.g. Immigration Service"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    Institution Name (Amharic)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.name_am}
+                    onChange={e => setForm(f => ({ ...f, name_am: e.target.value }))}
+                    placeholder="e.g. የኢሚግሬሽን አገልግሎት"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Institution Logo <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                />
+                {form.imagePreview && (
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-500 mb-2">Logo Preview:</p>
+                    <img src={form.imagePreview} alt="Logo preview" className="w-20 h-20 object-contain rounded-lg border border-gray-200 p-2" />
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Institution Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  placeholder="Short description explaining the institution and its role"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm resize-y"
+                />
+              </div>
+
+              <div className="mt-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Institution Details <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={form.details}
+                  onChange={e => setForm(f => ({ ...f, details: e.target.value }))}
+                  placeholder="Detailed institutional information used by the public institution listing"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm resize-y"
+                />
+              </div>
+
+              <div className="mt-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Official Institution Website <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="url"
+                  value={form.officialUrl}
+                  onChange={e => setForm(f => ({ ...f, officialUrl: e.target.value }))}
+                  placeholder="https://example.gov.et"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Services Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">Services</h3>
+                <button
+                  type="button"
+                  onClick={() => { setShowServiceForm(true); setEditingServiceIndex(null); setServiceForm({ title_en: '', title_am: '', time: '', fee: '', officialUrl: '', docs_en: [], docs_am: [] }); }}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition"
+                >
+                  + Add Service
+                </button>
+              </div>
+
+              {/* Services List */}
+              {form.services.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  {form.services.map((service, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">{service.title_en}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {service.docs_en.length} document{service.docs_en.length !== 1 ? 's' : ''} • {service.time} • {service.fee}
+                          </p>
+                        </div>
+                        <div className="flex gap-2 ml-4">
+                          <button
+                            type="button"
+                            onClick={() => editService(index)}
+                            className="text-blue-600 hover:underline text-xs font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeService(index)}
+                            className="text-red-600 hover:underline text-xs font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {form.services.length === 0 && !showServiceForm && (
+                <p className="text-sm text-gray-400 py-4 text-center">No services added yet. Click "+ Add Service" to add one.</p>
+              )}
+
+              {/* Service Form */}
+              {showServiceForm && (
+                <div className="p-5 bg-purple-50 border border-purple-200 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-gray-900">
+                      {editingServiceIndex !== null ? 'Edit Service' : 'New Service'}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => { setShowServiceForm(false); setEditingServiceIndex(null); setFormError(''); }}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Service Name (English) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={serviceForm.title_en}
+                        onChange={e => setServiceForm(f => ({ ...f, title_en: e.target.value }))}
+                        placeholder="e.g. Business License"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Service Name (Amharic)
+                      </label>
+                      <input
+                        type="text"
+                        value={serviceForm.title_am}
+                        onChange={e => setServiceForm(f => ({ ...f, title_am: e.target.value }))}
+                        placeholder="e.g. የንግድ ፈቃድ"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Processing Time <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={serviceForm.time}
+                        onChange={e => setServiceForm(f => ({ ...f, time: e.target.value }))}
+                        placeholder="e.g. 3-5 days"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                        Service Fee <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={serviceForm.fee}
+                        onChange={e => setServiceForm(f => ({ ...f, fee: e.target.value }))}
+                        placeholder="e.g. 500 ETB"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Official Service Website
+                    </label>
+                    <input
+                      type="url"
+                      value={serviceForm.officialUrl}
+                      onChange={e => setServiceForm(f => ({ ...f, officialUrl: e.target.value }))}
+                      placeholder="https://example.gov.et/service"
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                    />
+                  </div>
+
+                  {/* Required Documents */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Required Documents <span className="text-red-500">*</span>
+                    </label>
+                    
+                    {serviceForm.docs_en.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {serviceForm.docs_en.map((doc, i) => (
+                          <div key={i} className="flex items-center justify-between p-2 bg-white rounded-lg border border-gray-200">
+                            <span className="text-sm text-gray-700">{doc}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeDocument(i)}
+                              className="text-red-600 hover:text-red-700 text-xs"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div>
+                        <input
+                          type="text"
+                          value={docInput.en}
+                          onChange={e => setDocInput(d => ({ ...d, en: e.target.value }))}
+                          placeholder="Document name (English)"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          value={docInput.am}
+                          onChange={e => setDocInput(d => ({ ...d, am: e.target.value }))}
+                          placeholder="Document name (Amharic)"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addDocument}
+                      className="mt-2 px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-medium rounded-lg transition"
+                    >
+                      + Add Document
+                    </button>
+                  </div>
+
+                  <div className="pt-3 border-t border-purple-200">
+                    <button
+                      type="button"
+                      onClick={saveService}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition"
+                    >
+                      {editingServiceIndex !== null ? 'Update Service' : 'Save Service'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Form Error */}
+            {formError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                {formError}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <div className="pt-4 border-t border-gray-200">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-xl transition text-sm"
+              >
+                Save Institution
+              </button>
+            </div>
+          </form>
+        </div>
+      </>
+    );
+  }
+
+  // Institution List View
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
@@ -337,38 +834,15 @@ function SectionInstitutionManagement() {
           <h2 className="text-lg font-semibold text-gray-900 mb-1">Institution Management</h2>
           <p className="text-sm text-gray-500">Manage institutions registered in Hawassa MESOB.</p>
         </div>
-        <button onClick={() => setForm(f => ({ ...f, show: !f.show }))}
-          className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition"
-          style={{ display: canCreate ? 'block' : 'none' }}
-          aria-hidden={!canCreate}
-        >
-          {form.show ? 'Cancel' : '+ Add Institution'}
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setView('new')}
+            className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition"
+          >
+            + Add Institution
+          </button>
+        )}
       </div>
-
-      {form.show && canCreate && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-lg">
-          <h3 className="font-semibold text-gray-900 mb-4">Add New Institution</h3>
-          <form onSubmit={addInstitution} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">English Name <span className="text-red-500">*</span></label>
-              <input type="text" value={form.name_en} onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))}
-                placeholder="e.g. Immigration Service"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Amharic Name</label>
-              <input type="text" value={form.name_am} onChange={e => setForm(f => ({ ...f, name_am: e.target.value }))}
-                placeholder="e.g. የኢሚግሬሽን አገልግሎት"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm" />
-            </div>
-            {formError && <p className="text-sm text-red-600">{formError}</p>}
-            <button type="submit" className="px-5 py-2.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition">
-              Add Institution
-            </button>
-          </form>
-        </div>
-      )}
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
@@ -664,7 +1138,7 @@ function SectionAnalytics() {
 
 // ─── SECTION: Announcements ───────────────────────────────────────
 function SectionAnnouncements() {
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
+  const [announcements, setAnnouncements] = useState(() => getAnnouncements({}));
   const [selected, setSelected] = useState(null);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ title: '', body: '' });
@@ -677,18 +1151,23 @@ function SectionAnnouncements() {
   function publishAnnouncement(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.body.trim()) { setFormError('Title and body are required.'); return; }
-    const newAnn = {
-      id: Date.now(),
+    
+    const result = createAnnouncement({
       title: form.title.trim(),
       body: form.body.trim(),
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      read: false,
       author: 'System Admin',
-    };
-    setAnnouncements(prev => [newAnn, ...prev]);
-    setForm({ title: '', body: '' });
-    setFormError('');
-    setShowNew(false);
+      scope: 'system',
+      institution: null,
+    });
+
+    if (result.success) {
+      setAnnouncements(prev => [result.announcement, ...prev]);
+      setForm({ title: '', body: '' });
+      setFormError('');
+      setShowNew(false);
+    } else {
+      setFormError(result.message || 'Failed to create announcement.');
+    }
   }
 
   if (selected) {
@@ -728,7 +1207,7 @@ function SectionAnnouncements() {
 
       {showNew && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-2xl">
-          <h3 className="font-semibold text-gray-900 mb-4">Create Announcement</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Create System Announcement</h3>
           <form onSubmit={publishAnnouncement} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Title <span className="text-red-500">*</span></label>
@@ -737,14 +1216,17 @@ function SectionAnnouncements() {
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Body <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Content <span className="text-red-500">*</span></label>
               <textarea rows={4} value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
                 placeholder="Announcement content..."
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-400 outline-none transition text-sm resize-y" />
             </div>
+            <div className="p-4 bg-purple-50 border border-purple-100 rounded-xl text-sm text-purple-900">
+              <strong>Scope:</strong> This announcement will be visible system-wide to all users.
+            </div>
             {formError && <p className="text-sm text-red-600">{formError}</p>}
             <button type="submit" className="px-5 py-2.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition">
-              Publish
+              Publish Announcement
             </button>
           </form>
         </div>

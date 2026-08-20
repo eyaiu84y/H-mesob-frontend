@@ -58,7 +58,7 @@ export default function Hero() {
           {/* Logo */}
           <div className="mb-5 sm:mb-7 md:mb-8">
             <img
-              src="/image/image.jpg"
+              src="/image/icon.png"
               alt="logo"
               className="h-16 sm:h-20 md:h-24 xl:h-32 w-auto mx-auto object-contain transition-all duration-300"
             />

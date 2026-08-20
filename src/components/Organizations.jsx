@@ -8,12 +8,29 @@ function orgName(org, lang) {
 function svcTitle(svc, lang) {
   return lang === 'am' ? svc.title_am : svc.title_en;
 }
+function svcDesc(svc, lang) {
+  return lang === 'am' ? (svc.description_am || '') : (svc.description_en || '');
+}
 function svcDocs(svc, lang) {
   return lang === 'am' ? svc.docs_am : svc.docs_en;
 }
 
 function OrgModal({ org, onClose, t, lang }) {
   const [openIndex, setOpenIndex] = useState(null);
+
+  const handleToggle = (index) => {
+    setOpenIndex(openIndex === index ? null : index);
+    
+    // Auto-scroll to the opened service after a short delay
+    if (openIndex !== index) {
+      setTimeout(() => {
+        const element = document.getElementById(`service-${index}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 100);
+    }
+  };
 
   return (
     <div className="org-modal">
@@ -33,9 +50,9 @@ function OrgModal({ org, onClose, t, lang }) {
 
         <div className="org-modal-body">
           {org.services.map((svc, i) => (
-            <div key={i} className={`svc-item${openIndex === i ? ' open' : ''}`}>
+            <div key={i} id={`service-${i}`} className={`svc-item${openIndex === i ? ' open' : ''}`}>
               <button type="button" className="svc-toggle"
-                onClick={() => setOpenIndex(openIndex === i ? null : i)}>
+                onClick={() => handleToggle(i)}>
                 <span>{svcTitle(svc, lang)}</span>
                 <svg className="svc-chevron" xmlns="http://www.w3.org/2000/svg"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -43,6 +60,11 @@ function OrgModal({ org, onClose, t, lang }) {
                 </svg>
               </button>
               <div className="svc-panel">
+                {svcDesc(svc, lang) && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+                    {svcDesc(svc, lang)}
+                  </p>
+                )}
                 <div className="svc-meta">
                   <div><span>{t.org_time_label}</span><br /><strong>{svc.time}</strong></div>
                   <div><span>{t.org_fee_label}</span><br /><strong>{svc.fee}</strong></div>
@@ -51,9 +73,12 @@ function OrgModal({ org, onClose, t, lang }) {
                 <ul className="svc-docs">
                   {svcDocs(svc, lang).map((doc, j) => <li key={j}>{doc}</li>)}
                 </ul>
-                {svc.link && svc.link !== '#' && (
-                  <a className="svc-link" href={svc.link} target="_blank" rel="noopener noreferrer">
-                    {t.org_official}
+                {svc.officialUrl && svc.officialUrl !== '#' && (
+                  <a className="svc-link" href={svc.officialUrl} target="_blank" rel="noopener noreferrer">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    {lang === 'am' ? 'ኦፊሴላዊ የአገልግሎት ድረ-ገጽን ይጎብኙ' : 'Visit Official Service Website'}
                   </a>
                 )}
               </div>
@@ -83,7 +108,7 @@ export default function Organizations() {
               <div key={org.id} className={`org-card org-color-${org.id}`}
                 onClick={() => setSelectedOrg(org)}>
                 <img src={org.image} alt={orgName(org, lang)}
-                  onError={(e) => { e.target.src = '/image/image.jpg'; }} />
+                  onError={(e) => { e.target.src = '/image/icon.png'; }} />
                 <h5>{orgName(org, lang)}</h5>
                 <button type="button" className="org-btn"
                   onClick={(e) => { e.stopPropagation(); setSelectedOrg(org); }}>

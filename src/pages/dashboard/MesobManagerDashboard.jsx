@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { organizationsData } from '../../data/organizations';
+import { getAnnouncements, createAnnouncement, getMaintenanceTasks } from '../../utils/sharedData';
 
 // ─── Navigation sections ──────────────────────────────────────────
 const SECTIONS = [
@@ -60,12 +61,7 @@ const mockMaintenanceItems = [
   { id: '#TASK-087', institution: 'Ministry of Revenues',   title: 'OS update – Admin workstations',   priority: 'Normal', technician: 'Technician', status: 'Completed',   report: '#RPT-051'    },
 ];
 
-const mockAnnouncements = [
-  { id: 1, title: 'Scheduled System Maintenance – Sat Aug 16',  body: 'A system maintenance window is planned for Saturday, Aug 16, 2026 from 8 PM to 11 PM. All Institution Managers must ensure pending operations are completed before that time. Technicians should be on standby.', date: 'Aug 14, 2026', read: false },
-  { id: 2, title: 'Q3 Operational Performance Review',           body: 'The Q3 2026 operational performance review is scheduled for August 20, 2026. All MESOB operations data for July–August must be compiled and submitted to the MESOB Manager by August 18.', date: 'Aug 12, 2026', read: false },
-  { id: 3, title: 'Updated Service Requirements – National ID', body: 'The National ID Program has updated required documents for ID registration services. Institution Managers should ensure staff are informed. The updated requirements are visible in the Service Requirements section.', date: 'Aug 10, 2026', read: true  },
-  { id: 4, title: 'Citizen Satisfaction Rate – July 2026',      body: 'The MESOB Center achieved a 98.7% citizen satisfaction rate in July 2026. Congratulations to all Institution Managers and their teams. Continue maintaining high service standards.', date: 'Aug 05, 2026', read: true  },
-];
+// Mock announcements removed - using shared data system
 
 // ─── Badge helpers ────────────────────────────────────────────────
 function PriorityBadge({ priority }) {
@@ -412,9 +408,10 @@ function SectionApplicationMonitoring() {
 
 // ─── SECTION: Maintenance Oversight ──────────────────────────────
 function SectionMaintenanceOversight() {
-  const open      = mockMaintenanceItems.filter(t => t.status !== 'Completed').length;
-  const completed = mockMaintenanceItems.filter(t => t.status === 'Completed').length;
-  const highPri   = mockMaintenanceItems.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
+  const tasks = getMaintenanceTasks(); // All tasks across institutions
+  const open      = tasks.filter(t => t.status !== 'Completed').length;
+  const completed = tasks.filter(t => t.status === 'Completed').length;
+  const highPri   = tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length;
 
   return (
     <>
@@ -425,23 +422,25 @@ function SectionMaintenanceOversight() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Open Tasks</p><p className="text-2xl font-bold">{open}</p>{highPri > 0 && <p className="text-xs text-red-600 mt-1">{highPri} high priority</p>}</div>
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Completed</p><p className="text-2xl font-bold text-green-600">{completed}</p></div>
-        <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Reports Submitted</p><p className="text-2xl font-bold">{mockMaintenanceItems.filter(t => t.report).length}</p></div>
+        <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Total Tasks</p><p className="text-2xl font-bold">{tasks.length}</p></div>
       </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-100"><h3 className="font-semibold text-gray-900">Maintenance Tasks – MESOB-wide</h3></div>
         <div className="table-container border-0 rounded-none">
           <table className="data-table">
-            <thead><tr><th>Task ID</th><th>Institution</th><th>Task</th><th>Priority</th><th>Technician</th><th>Status</th><th>Report</th></tr></thead>
+            <thead><tr><th>Task ID</th><th>Institution</th><th>Task</th><th>Priority</th><th>Assigned To</th><th>Status</th><th>Date</th></tr></thead>
             <tbody>
-              {mockMaintenanceItems.map(t => (
+              {tasks.length === 0 ? (
+                <tr><td colSpan={7} className="text-center text-gray-400 py-6">No maintenance tasks.</td></tr>
+              ) : tasks.map(t => (
                 <tr key={t.id}>
                   <td className="font-medium">{t.id}</td>
                   <td>{t.institution}</td>
                   <td>{t.title}</td>
                   <td><PriorityBadge priority={t.priority} /></td>
-                  <td>{t.technician}</td>
+                  <td>{t.assignedTo}</td>
                   <td><StatusBadge status={t.status} /></td>
-                  <td>{t.report ? <span className="text-green-600 font-medium text-sm">Submitted</span> : <span className="text-gray-400 text-sm">—</span>}</td>
+                  <td>{t.assignedDate}</td>
                 </tr>
               ))}
             </tbody>
@@ -707,12 +706,79 @@ function SectionAnalytics() {
 }
 
 // ─── SECTION: Announcements ───────────────────────────────────────
-function SectionAnnouncements() {
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
+function SectionAnnouncements({ user }) {
+  const [announcements, setAnnouncements] = useState(() => getAnnouncements({ scope: 'mesob' }));
   const [selected, setSelected] = useState(null);
+  const [view, setView] = useState('list'); // 'list' | 'new'
+  const [form, setForm] = useState({ title: '', body: '' });
+  const [formError, setFormError] = useState('');
 
   function markRead(id) { setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a)); }
 
+  function submitAnnouncement(e) {
+    e.preventDefault();
+    if (!form.title.trim() || !form.body.trim()) {
+      setFormError('Title and content are required.');
+      return;
+    }
+
+    const result = createAnnouncement({
+      title: form.title.trim(),
+      body: form.body.trim(),
+      author: user?.name || 'MESOB Manager',
+      scope: 'mesob',
+      institution: null,
+    });
+
+    if (result.success) {
+      setAnnouncements(prev => [result.announcement, ...prev]);
+      setForm({ title: '', body: '' });
+      setFormError('');
+      setView('list');
+    } else {
+      setFormError(result.message || 'Failed to create announcement.');
+    }
+  }
+
+  // New announcement form
+  if (view === 'new') {
+    return (
+      <>
+        <div className="mb-6">
+          <button onClick={() => { setView('list'); setFormError(''); }} className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+            Cancel
+          </button>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 max-w-2xl">
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">New MESOB Announcement</h2>
+          <form onSubmit={submitAnnouncement} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Title <span className="text-red-500">*</span></label>
+              <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="Brief announcement title"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Content <span className="text-red-500">*</span></label>
+              <textarea rows={5} value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
+                placeholder="Announcement content"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition text-sm resize-y" />
+            </div>
+            <div className="p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-800">
+              <strong>Scope:</strong> This announcement will be visible to all MESOB staff across all institutions.
+            </div>
+            {formError && <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">{formError}</div>}
+            <button type="submit" className="px-6 py-3 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-xl transition text-sm">
+              Publish Announcement
+            </button>
+          </form>
+        </div>
+      </>
+    );
+  }
+
+  // Announcement detail view
   if (selected) {
     const ann = announcements.find(a => a.id === selected);
     return (
@@ -728,21 +794,29 @@ function SectionAnnouncements() {
             <h2 className="text-lg font-semibold text-gray-900">{ann.title}</h2>
             {!ann.read && <span className="badge bg-blue-100 text-blue-800 flex-shrink-0">New</span>}
           </div>
-          <p className="text-sm text-gray-500 mb-4">{ann.date}</p>
+          <p className="text-sm text-gray-500 mb-4">{ann.date} {ann.author && `• ${ann.author}`}</p>
           <p className="text-sm text-gray-700 leading-relaxed">{ann.body}</p>
         </div>
       </>
     );
   }
 
+  // Announcement list view
   return (
     <>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Announcements</h2>
-        <p className="text-sm text-gray-500">MESOB-wide operational announcements and notifications.</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">Announcements</h2>
+          <p className="text-sm text-gray-500">MESOB-wide operational announcements and notifications.</p>
+        </div>
+        <button onClick={() => setView('new')} className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition">
+          + New Announcement
+        </button>
       </div>
       <div className="space-y-3">
-        {announcements.map(ann => (
+        {announcements.length === 0 ? (
+          <div className="text-center text-gray-400 py-12">No announcements available.</div>
+        ) : announcements.map(ann => (
           <div key={ann.id} onClick={() => { setSelected(ann.id); markRead(ann.id); }}
             className={`bg-white rounded-2xl border shadow-sm p-5 cursor-pointer hover:shadow-md transition-all duration-200 ${ann.read ? 'border-gray-100' : 'border-blue-200 bg-blue-50/30'}`}>
             <div className="flex items-start justify-between gap-4">
@@ -751,7 +825,7 @@ function SectionAnnouncements() {
                   {!ann.read && <span className="inline-block w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />}
                   <h3 className="font-semibold text-sm text-gray-900 leading-snug">{ann.title}</h3>
                 </div>
-                <p className="text-xs text-gray-500">{ann.date}</p>
+                <p className="text-xs text-gray-500">{ann.date} {ann.author && `• ${ann.author}`}</p>
               </div>
               <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
@@ -817,7 +891,7 @@ export default function MesobManagerDashboard() {
       case 'Maintenance Oversight':  return <SectionMaintenanceOversight />;
       case 'Reports':                return <SectionReports />;
       case 'Analytics':              return <SectionAnalytics />;
-      case 'Announcements':          return <SectionAnnouncements />;
+      case 'Announcements':          return <SectionAnnouncements user={user} />;
       case 'My Profile':             return <SectionMyProfile user={user} />;
       default:                       return <SectionDashboard setActiveSection={navigate} />;
     }

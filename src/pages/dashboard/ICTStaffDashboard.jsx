@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getMaintenanceTasks, updateMaintenanceTask, getAnnouncements } from '../../utils/sharedData';
 
 // ─── Navigation sections ─────────────────────────────────────────
 const SECTIONS = [
@@ -10,25 +11,7 @@ const SECTIONS = [
   'My Profile',
 ];
 
-// ─── Mock static data (structured for future API replacement) ────
-
-const mockTasks = [
-  { id: '#TASK-101', title: 'Replace faulty network switch – Room 3B',  institution: 'National ID Program',  priority: 'High',   assignedDate: 'Aug 13, 2026', status: 'Assigned',    description: 'The network switch in Room 3B is causing intermittent disconnections. Replace with the spare unit in the storage room.' },
-  { id: '#TASK-098', title: 'Inspect UPS units – Server room',          institution: 'MESOB Center (Main)',  priority: 'Medium', assignedDate: 'Aug 12, 2026', status: 'In Progress', description: 'Routine inspection of all UPS units in the server room. Check battery health and log any units requiring replacement.' },
-  { id: '#TASK-094', title: 'Fix printer connectivity – Counter 2',     institution: 'Ethio Telecom',        priority: 'Normal', assignedDate: 'Aug 10, 2026', status: 'Assigned',    description: 'Counter 2 printer is not connecting to the network. Check cable connections, driver installation, and network configuration.' },
-  { id: '#TASK-087', title: 'Update workstation OS – Admin office',     institution: 'Ministry of Revenues', priority: 'Normal', assignedDate: 'Aug 07, 2026', status: 'Completed',   description: 'Apply pending security updates and OS patches to the 3 workstations in the admin office.' },
-];
-
-const mockReports = [
-  { id: '#RPT-055', taskId: '#TASK-087', title: 'OS Update – Admin office workstations', institution: 'Ministry of Revenues', date: 'Aug 08, 2026', status: 'Submitted', issue: 'Workstations running outdated OS with pending security patches.', action: 'Applied all pending security and OS updates on 3 workstations. Rebooted and verified functionality.', result: 'All workstations updated and operational.' },
-  { id: '#RPT-051', taskId: '#TASK-079', title: 'Cable replacement – Queue display', institution: 'National ID Program',  date: 'Aug 03, 2026', status: 'Submitted', issue: 'Queue display monitor had a damaged HDMI cable causing no display output.', action: 'Replaced HDMI cable and tested display output. No further issues found.', result: 'Display operational.' },
-];
-
-const mockAnnouncements = [
-  { id: 1, title: 'Scheduled Maintenance Window – Sat Aug 16',       body: 'A scheduled maintenance window is planned for Saturday, Aug 16, 2026 from 8 PM to 11 PM. All ICT staff must complete their assigned tasks before the window begins and be available for support.', date: 'Aug 14, 2026', read: false },
-  { id: 2, title: 'New Task Assignment Process – Institution Manager', body: 'Effective immediately, all technical task assignments will be issued through the Task Management system by the Institution Manager. Please ensure your task statuses are updated daily.', date: 'Aug 11, 2026', read: false },
-  { id: 3, title: 'Updated Equipment Inventory – Storage Room',        body: 'The storage room equipment inventory has been updated. A list of available spare parts and equipment is now posted in the break room. Please log all equipment taken from storage in the maintenance logbook.', date: 'Aug 09, 2026', read: true },
-];
+// ─── Mock static data removed - using shared data system ────────
 
 // ─── Badge helpers ────────────────────────────────────────────────
 function PriorityBadge({ priority }) {
@@ -52,9 +35,10 @@ function StatusBadge({ status }) {
 }
 
 // ─── SECTION: Dashboard Overview ─────────────────────────────────
-function SectionDashboard({ setActiveSection }) {
-  const pending    = mockTasks.filter(t => t.status !== 'Completed').length;
-  const reportCount = mockReports.length;
+function SectionDashboard({ setActiveSection, user }) {
+  const tasks = getMaintenanceTasks({ assignedTo: user?.name });
+  const pending = tasks.filter(t => t.status !== 'Completed').length;
+  const announcements = getAnnouncements({ institution: 'MESOB Center' });
 
   return (
     <>
@@ -62,9 +46,9 @@ function SectionDashboard({ setActiveSection }) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="stat-card">
           <p className="text-sm text-gray-500 mb-1">Assigned Tasks</p>
-          <p className="text-2xl font-bold">{mockTasks.length}</p>
+          <p className="text-2xl font-bold">{tasks.length}</p>
           <p className="text-xs text-amber-600 mt-1">
-            {mockTasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length} high priority
+            {tasks.filter(t => t.priority === 'High' && t.status !== 'Completed').length} high priority
           </p>
         </div>
         <div className="stat-card">
@@ -73,9 +57,9 @@ function SectionDashboard({ setActiveSection }) {
           <p className="text-xs text-gray-500 mt-1">Not yet completed</p>
         </div>
         <div className="stat-card">
-          <p className="text-sm text-gray-500 mb-1">Maintenance Reports</p>
-          <p className="text-2xl font-bold">{reportCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Submitted</p>
+          <p className="text-sm text-gray-500 mb-1">Announcements</p>
+          <p className="text-2xl font-bold">{announcements.filter(a => !a.read).length}</p>
+          <p className="text-xs text-gray-500 mt-1">Unread</p>
         </div>
       </div>
 
@@ -103,7 +87,7 @@ function SectionDashboard({ setActiveSection }) {
               </tr>
             </thead>
             <tbody>
-              {mockTasks.filter(t => t.status !== 'Completed').slice(0, 3).map(task => (
+              {tasks.filter(t => t.status !== 'Completed').slice(0, 3).map(task => (
                 <tr key={task.id}>
                   <td className="font-medium">{task.id}</td>
                   <td>{task.title}</td>
@@ -133,29 +117,36 @@ function SectionDashboard({ setActiveSection }) {
 }
 
 // ─── SECTION: My Tasks ────────────────────────────────────────────
-function SectionMyTasks() {
-  const [tasks, setTasks] = useState(mockTasks);
+function SectionMyTasks({ user }) {
+  const [tasks, setTasks] = useState(() => getMaintenanceTasks({ assignedTo: user?.name }));
   const [selectedTask, setSelectedTask] = useState(null);
 
   function advanceStatus(id) {
-    setTasks(prev => prev.map(t => {
-      if (t.id !== id) return t;
-      const next = { Assigned: 'In Progress', 'In Progress': 'Completed' }[t.status];
-      return next ? { ...t, status: next } : t;
-    }));
-    // Keep selected task in sync
-    setSelectedTask(prev => {
-      if (!prev || prev.id !== id) return prev;
-      const next = { Assigned: 'In Progress', 'In Progress': 'Completed' }[prev.status];
-      return next ? { ...prev, status: next } : prev;
-    });
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const statusMap = {
+      'Assigned': 'In Progress',
+      'In Progress': 'Completed',
+    };
+
+    const newStatus = statusMap[task.status];
+    if (!newStatus) return;
+
+    const result = updateMaintenanceTask(id, { status: newStatus });
+    if (result.success) {
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+      if (selectedTask?.id === id) {
+        setSelectedTask(prev => ({ ...prev, status: newStatus }));
+      }
+    }
   }
 
   function actionLabel(status) {
     return { Assigned: 'Start', 'In Progress': 'Complete' }[status] || null;
   }
 
-  // ── Task detail view ──
+  // ── Task detail view with comprehensive employee report fields ──
   if (selectedTask) {
     const live = tasks.find(t => t.id === selectedTask.id) || selectedTask;
     return (
@@ -172,7 +163,7 @@ function SectionMyTasks() {
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-4xl">
           {/* Task header */}
           <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
             <div>
@@ -193,37 +184,114 @@ function SectionMyTasks() {
             )}
           </div>
 
-          {/* Details grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Institution</span>
-                <span className="font-medium text-gray-900">{live.institution}</span>
+          {/* Comprehensive details grid showing ALL employee report fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-sm">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Task Information</p>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Task ID:</span>
+                    <span className="font-medium text-gray-900">{live.id}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Institution:</span>
+                    <span className="font-medium text-gray-900">{live.institution}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Assigned Date:</span>
+                    <span className="font-medium text-gray-900">{live.assignedDate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Status:</span>
+                    <StatusBadge status={live.status} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Priority:</span>
+                    <PriorityBadge priority={live.priority} />
+                  </div>
+                  {live.reportId && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Related Report:</span>
+                      <span className="font-medium text-gray-900">{live.reportId}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Assigned Date</span>
-                <span className="font-medium text-gray-900">{live.assignedDate}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Status</span>
-                <StatusBadge status={live.status} />
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Priority</span>
-                <PriorityBadge priority={live.priority} />
-              </div>
+
+              {(live.employeeName || live.employeeId) && (
+                <div>
+                  <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Reported By</p>
+                  <div className="space-y-2">
+                    {live.employeeName && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Employee Name:</span>
+                        <span className="font-medium text-gray-900">{live.employeeName}</span>
+                      </div>
+                    )}
+                    {live.employeeId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Employee ID:</span>
+                        <span className="font-medium text-gray-900">{live.employeeId}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4">
+              {(live.problemType || live.location || live.officeNumber) && (
+                <div>
+                  <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Location</p>
+                  <div className="space-y-2">
+                    {live.problemType && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Problem Type:</span>
+                        <span className="font-medium text-gray-900">{live.problemType}</span>
+                      </div>
+                    )}
+                    {live.location && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Location:</span>
+                        <span className="font-medium text-gray-900">{live.location}</span>
+                      </div>
+                    )}
+                    {live.officeNumber && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Office Number:</span>
+                        <span className="font-medium text-gray-900">{live.officeNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Description */}
-          <div>
-            <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Task Description</p>
-            <p className="text-sm text-gray-700 leading-relaxed">{live.description}</p>
-          </div>
+          {/* Problem Description */}
+          {live.description && (
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Description</p>
+              <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">{live.description}</p>
+            </div>
+          )}
+
+          {/* Problem Photo from employee report */}
+          {live.photoPreview && (
+            <div>
+              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Photo</p>
+              <img
+                src={live.photoPreview}
+                alt="Problem photo"
+                className="max-w-lg w-full rounded-xl border border-gray-200 shadow-sm"
+              />
+            </div>
+          )}
         </div>
 
-        <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-sm text-cyan-900">
-          <strong>Status Flow:</strong> Assigned → In Progress → Completed. Use the action button to advance task status.
+        <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-sm text-cyan-900 max-w-4xl">
+          <strong>Status Flow:</strong> Assigned → In Progress → Completed. Use the action button to advance task status. All details from the employee maintenance report are shown above including location, problem type, and photo.
         </div>
       </>
     );
@@ -258,7 +326,9 @@ function SectionMyTasks() {
               </tr>
             </thead>
             <tbody>
-              {tasks.map(task => (
+              {tasks.length === 0 ? (
+                <tr><td colSpan={7} className="text-center text-gray-400 py-6">No tasks assigned yet.</td></tr>
+              ) : tasks.map(task => (
                 <tr key={task.id}>
                   <td className="font-medium">{task.id}</td>
                   <td>{task.title}</td>
@@ -289,243 +359,49 @@ function SectionMyTasks() {
 }
 
 // ─── SECTION: Maintenance Reports ────────────────────────────────
-function SectionMaintenanceReports() {
-  const [reports, setReports] = useState(mockReports);
-  const [view, setView] = useState('list'); // 'list' | 'new' | 'detail'
-  const [selectedReport, setSelectedReport] = useState(null);
+function SectionMaintenanceReports({ user }) {
+  const tasks = getMaintenanceTasks({ assignedTo: user?.name });
+  const completedTasks = tasks.filter(t => t.status === 'Completed');
 
-  // New report form state
-  const [form, setForm] = useState({
-    taskId: '', title: '', issue: '', action: '', result: '',
-  });
-  const [formError, setFormError] = useState('');
-
-  function submitReport(e) {
-    e.preventDefault();
-    if (!form.taskId.trim() || !form.title.trim() || !form.issue.trim() || !form.action.trim()) {
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-    const newReport = {
-      id: `#RPT-${Date.now().toString().slice(-3)}`,
-      taskId: form.taskId.trim(),
-      title: form.title.trim(),
-      institution: 'MESOB Center',
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      status: 'Submitted',
-      issue: form.issue.trim(),
-      action: form.action.trim(),
-      result: form.result.trim() || 'Pending assessment.',
-    };
-    setReports(prev => [newReport, ...prev]);
-    setForm({ taskId: '', title: '', issue: '', action: '', result: '' });
-    setFormError('');
-    setView('list');
-  }
-
-  // Detail view
-  if (view === 'detail' && selectedReport) {
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => { setView('list'); setSelectedReport(null); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Reports
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
-            <div>
-              <p className="text-xs text-gray-400 mb-1">{selectedReport.id} · {selectedReport.taskId}</p>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">{selectedReport.title}</h2>
-              <StatusBadge status={selectedReport.status} />
-            </div>
-            <p className="text-sm text-gray-500">{selectedReport.date}</p>
-          </div>
-
-          <div className="space-y-5 text-sm">
-            <div>
-              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Institution</p>
-              <p className="text-gray-700">{selectedReport.institution}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Issue / Problem</p>
-              <p className="text-gray-700 leading-relaxed">{selectedReport.issue}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Action Taken</p>
-              <p className="text-gray-700 leading-relaxed">{selectedReport.action}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Result</p>
-              <p className="text-gray-700 leading-relaxed">{selectedReport.result}</p>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // New report form
-  if (view === 'new') {
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => { setView('list'); setFormError(''); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Cancel
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 max-w-2xl">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">New Maintenance Report</h2>
-          <form onSubmit={submitReport} className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Related Task ID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.taskId}
-                  onChange={e => setForm(f => ({ ...f, taskId: e.target.value }))}
-                  placeholder="e.g. #TASK-101"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Report Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Brief description of work"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Issue / Problem <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                value={form.issue}
-                onChange={e => setForm(f => ({ ...f, issue: e.target.value }))}
-                placeholder="Describe the technical issue or problem found"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm resize-y"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Action Taken <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                rows={3}
-                value={form.action}
-                onChange={e => setForm(f => ({ ...f, action: e.target.value }))}
-                placeholder="Describe the maintenance work performed"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm resize-y"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Result</label>
-              <textarea
-                rows={2}
-                value={form.result}
-                onChange={e => setForm(f => ({ ...f, result: e.target.value }))}
-                placeholder="Outcome / current status after maintenance"
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm resize-y"
-              />
-            </div>
-
-            {formError && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                {formError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="px-6 py-3 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-xl transition text-sm"
-            >
-              Submit Report
-            </button>
-          </form>
-        </div>
-      </>
-    );
-  }
-
-  // Report list view
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Maintenance Reports</h2>
-          <p className="text-sm text-gray-500">Reports for completed maintenance tasks.</p>
-        </div>
-        <button
-          onClick={() => setView('new')}
-          className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition"
-        >
-          + New Report
-        </button>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Maintenance Reports</h2>
+        <p className="text-sm text-gray-500">Your completed maintenance tasks serve as your maintenance reports.</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">Completed Maintenance Work</h3>
+          <span className="text-sm text-gray-500">{completedTasks.length} completed</span>
+        </div>
         <div className="table-container border-0 rounded-none">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Report ID</th>
+                <th>Task ID</th>
                 <th>Title</th>
-                <th>Related Task</th>
+                <th>Related Report</th>
                 <th>Institution</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th>Priority</th>
+                <th>Completed Date</th>
               </tr>
             </thead>
             <tbody>
-              {reports.length === 0 ? (
+              {completedTasks.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-6">
-                    No maintenance reports submitted yet.
+                  <td colSpan={6} className="text-center text-gray-400 py-6">
+                    No completed maintenance work yet.
                   </td>
                 </tr>
-              ) : reports.map(r => (
-                <tr key={r.id}>
-                  <td className="font-medium">{r.id}</td>
-                  <td>{r.title}</td>
-                  <td>{r.taskId}</td>
-                  <td>{r.institution}</td>
-                  <td>{r.date}</td>
-                  <td><StatusBadge status={r.status} /></td>
-                  <td>
-                    <button
-                      onClick={() => { setSelectedReport(r); setView('detail'); }}
-                      className="text-blue-600 hover:underline text-sm font-medium"
-                    >
-                      View
-                    </button>
-                  </td>
+              ) : completedTasks.map(task => (
+                <tr key={task.id}>
+                  <td className="font-medium">{task.id}</td>
+                  <td>{task.title}</td>
+                  <td>{task.reportId || <span className="text-gray-400">—</span>}</td>
+                  <td>{task.institution}</td>
+                  <td><PriorityBadge priority={task.priority} /></td>
+                  <td>{task.assignedDate}</td>
                 </tr>
               ))}
             </tbody>
@@ -534,7 +410,7 @@ function SectionMaintenanceReports() {
       </div>
 
       <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-sm text-cyan-900">
-        <strong>Maintenance Reports:</strong> Submit a report for each completed maintenance task. Reports are reviewed by the Institution Manager.
+        <strong>Maintenance Reports:</strong> When you complete a task, it automatically becomes part of your maintenance history. Institution Managers can view your completed work.
       </div>
     </>
   );
@@ -542,7 +418,7 @@ function SectionMaintenanceReports() {
 
 // ─── SECTION: Announcements ───────────────────────────────────────
 function SectionAnnouncements() {
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
+  const [announcements, setAnnouncements] = useState(() => getAnnouncements({ institution: 'MESOB Center' }));
   const [selected, setSelected] = useState(null);
 
   function markRead(id) {
@@ -569,7 +445,7 @@ function SectionAnnouncements() {
             <h2 className="text-lg font-semibold text-gray-900">{ann.title}</h2>
             {!ann.read && <span className="badge bg-blue-100 text-blue-800 flex-shrink-0">New</span>}
           </div>
-          <p className="text-sm text-gray-500 mb-4">{ann.date}</p>
+          <p className="text-sm text-gray-500 mb-4">{ann.date} {ann.author && `• ${ann.author}`}</p>
           <p className="text-sm text-gray-700 leading-relaxed">{ann.body}</p>
         </div>
       </>
@@ -583,7 +459,9 @@ function SectionAnnouncements() {
         <p className="text-sm text-gray-500">Operational announcements and notifications.</p>
       </div>
       <div className="space-y-3">
-        {announcements.map(ann => (
+        {announcements.length === 0 ? (
+          <div className="text-center text-gray-400 py-12">No announcements available.</div>
+        ) : announcements.map(ann => (
           <div
             key={ann.id}
             onClick={() => { setSelected(ann.id); markRead(ann.id); }}
@@ -669,12 +547,12 @@ export default function ICTStaffDashboard() {
 
   function renderSection() {
     switch (activeSection) {
-      case 'Dashboard':           return <SectionDashboard setActiveSection={navigate} />;
-      case 'My Tasks':            return <SectionMyTasks />;
-      case 'Maintenance Reports': return <SectionMaintenanceReports />;
+      case 'Dashboard':           return <SectionDashboard setActiveSection={navigate} user={user} />;
+      case 'My Tasks':            return <SectionMyTasks user={user} />;
+      case 'Maintenance Reports': return <SectionMaintenanceReports user={user} />;
       case 'Announcements':       return <SectionAnnouncements />;
       case 'My Profile':          return <SectionMyProfile user={user} />;
-      default:                    return <SectionDashboard setActiveSection={navigate} />;
+      default:                    return <SectionDashboard setActiveSection={navigate} user={user} />;
     }
   }
 
