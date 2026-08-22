@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { AuthProvider } from './context/AuthContext';
+import { QueueProvider } from './context/QueueContext';
 
 // Public pages
 import HomePage from './pages/HomePage';
@@ -39,8 +40,9 @@ export default function App() {
   return (
     <AppProvider>
       <AuthProvider>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+        <QueueProvider>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />
             <Route path="/service-catalogue" element={<ServiceCataloguePage />} />
@@ -100,7 +102,8 @@ export default function App() {
               }
             />
           </Routes>
-        </Suspense>
+          </Suspense>
+        </QueueProvider>
       </AuthProvider>
     </AppProvider>
   );

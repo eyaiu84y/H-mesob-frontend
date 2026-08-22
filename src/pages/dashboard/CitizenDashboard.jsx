@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/dashboard/DashboardLayout';
+import QueueManagement from '../../components/dashboard/QueueManagement';
 import { useAuth } from '../../context/AuthContext';
+import { useQueue } from '../../context/QueueContext';
 
 export default function CitizenDashboard() {
   const { user } = useAuth();
+  const { getActiveTickets } = useQueue();
   const [activeSection, setActiveSection] = useState('dashboard');
   const firstName = user?.name?.split(' ')[0] || 'Citizen';
+  const activeQueueCount = getActiveTickets().length;
 
   const navLinks = [
     { label: 'My Dashboard', section: 'dashboard' },
     { label: 'My Applications', section: 'applications' },
+    { label: 'My Queue', section: 'queue' },
     { label: 'Apply for Service', section: 'apply' },
     { label: 'Announcements', section: 'announcements' },
     { label: 'Profile & Documents', section: 'profile' },
@@ -41,23 +46,30 @@ export default function CitizenDashboard() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          {/* TODO: Connect to backend API for real citizen application statistics */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
             <div className="stat-card">
               <p className="text-sm text-gray-500 mb-1">Active Applications</p>
-              <p className="text-2xl font-bold">2</p>
+              <p className="text-2xl font-bold">0</p>
             </div>
             <div className="stat-card">
               <p className="text-sm text-gray-500 mb-1">Completed</p>
-              <p className="text-2xl font-bold">5</p>
+              <p className="text-2xl font-bold">0</p>
             </div>
+            <button onClick={() => setActiveSection('queue')} className="stat-card hover:border-blue-400 transition text-left">
+              <p className="text-sm text-gray-500 mb-1">Active Queues</p>
+              <p className="text-2xl font-bold">{activeQueueCount}</p>
+              <p className="text-xs text-blue-600 mt-1 font-medium">View →</p>
+            </button>
             <div className="stat-card">
               <p className="text-sm text-gray-500 mb-1">Announcements</p>
-              <p className="text-2xl font-bold">3</p>
+              <p className="text-2xl font-bold">0</p>
               <p className="text-xs text-gray-500 mt-1">Unread</p>
             </div>
           </div>
 
           {/* Applications table */}
+          {/* TODO: Connect to backend API for real citizen applications */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-semibold text-gray-900">Recent Applications</h2>
@@ -81,18 +93,13 @@ export default function CitizenDashboard() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="font-medium">#APP-1024</td>
-                    <td>National ID Registration</td>
-                    <td><span className="badge bg-amber-100 text-amber-800">Pending</span></td>
-                    <td>Aug 11, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Track</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0987</td>
-                    <td>Business License</td>
-                    <td><span className="badge bg-blue-100 text-blue-800">In Review</span></td>
-                    <td>Aug 05, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Track</a></td>
+                    <td colSpan={5} className="text-center text-gray-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="font-medium text-gray-500">No applications yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Click "Apply for Service" to submit your first application</p>
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -100,7 +107,7 @@ export default function CitizenDashboard() {
           </div>
 
           {/* Quick action cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <button
               onClick={() => setActiveSection('apply')}
               className="stat-card hover:border-blue-400 transition flex items-center gap-4"
@@ -109,6 +116,20 @@ export default function CitizenDashboard() {
               <div className="text-left">
                 <p className="font-medium text-gray-900">Apply for a Service</p>
                 <p className="text-sm text-gray-500">Browse available services</p>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveSection('queue')}
+              className="stat-card hover:border-blue-400 transition flex items-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-gray-900">My Queue</p>
+                <p className="text-sm text-gray-500">{activeQueueCount > 0 ? `${activeQueueCount} active ticket${activeQueueCount > 1 ? 's' : ''}` : 'Join a service queue'}</p>
               </div>
             </button>
             <Link to="/" className="stat-card hover:border-blue-400 transition flex items-center gap-4">
@@ -141,14 +162,16 @@ export default function CitizenDashboard() {
           </div>
 
           {/* Filters */}
+          {/* TODO: Connect to backend API for real citizen application filters and counts */}
           <div className="flex gap-2 flex-wrap">
-            <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">All (7)</button>
-            <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">Pending (2)</button>
+            <button className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">All (0)</button>
+            <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">Pending (0)</button>
             <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">In Review (0)</button>
-            <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">Completed (5)</button>
+            <button className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">Completed (0)</button>
           </div>
 
           {/* Applications table */}
+          {/* TODO: Connect to backend API for real citizen applications */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="table-container border-0 rounded-none">
               <table className="data-table">
@@ -164,66 +187,24 @@ export default function CitizenDashboard() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="font-medium">#APP-1024</td>
-                    <td>National ID Registration</td>
-                    <td><span className="badge bg-amber-100 text-amber-800">Pending</span></td>
-                    <td>Aug 11, 2026</td>
-                    <td>Aug 15, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Track</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0987</td>
-                    <td>Business License</td>
-                    <td><span className="badge bg-blue-100 text-blue-800">In Review</span></td>
-                    <td>Aug 05, 2026</td>
-                    <td>Aug 14, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Track</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0851</td>
-                    <td>Tax Clearance</td>
-                    <td><span className="badge bg-green-100 text-green-800">Completed</span></td>
-                    <td>Jul 22, 2026</td>
-                    <td>Aug 01, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Download</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0756</td>
-                    <td>Passport Renewal</td>
-                    <td><span className="badge bg-green-100 text-green-800">Completed</span></td>
-                    <td>Jul 10, 2026</td>
-                    <td>Jul 25, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Download</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0698</td>
-                    <td>Work Permit</td>
-                    <td><span className="badge bg-green-100 text-green-800">Completed</span></td>
-                    <td>Jun 28, 2026</td>
-                    <td>Jul 15, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Download</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0621</td>
-                    <td>Birth Certificate</td>
-                    <td><span className="badge bg-green-100 text-green-800">Completed</span></td>
-                    <td>Jun 10, 2026</td>
-                    <td>Jun 20, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Download</a></td>
-                  </tr>
-                  <tr>
-                    <td className="font-medium">#APP-0543</td>
-                    <td>Driver License</td>
-                    <td><span className="badge bg-green-100 text-green-800">Completed</span></td>
-                    <td>May 15, 2026</td>
-                    <td>Jun 01, 2026</td>
-                    <td><a href="#" className="text-blue-600 hover:underline text-sm">Download</a></td>
+                    <td colSpan={6} className="text-center text-gray-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="font-medium text-gray-500">No applications yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Your submitted applications will appear here</p>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
+      )}
+
+      {/* My Queue Section */}
+      {activeSection === 'queue' && (
+        <QueueManagement />
       )}
 
       {/* Apply for Service Section */}

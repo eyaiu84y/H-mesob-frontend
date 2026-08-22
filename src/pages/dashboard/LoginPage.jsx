@@ -4,12 +4,12 @@ import { useAuth, ROLE_ROUTES } from '../../context/AuthContext';
 import PasswordInput from '../../components/PasswordInput';
 
 const DEMO_ACCOUNTS = [
-  { label: 'Super Admin',         email: 'superadmin@mesobcenter.et', password: 'super123',   style: 'bg-purple-50 hover:bg-purple-100 text-purple-800' },
-  { label: 'MESOB Manager',       email: 'manager@mesobcenter.et',    password: 'manager123', style: 'bg-red-50 hover:bg-red-100 text-red-800' },
-  { label: 'Institution Manager', email: 'inst.manager@mesobcenter.et', password: 'inst123',  style: 'bg-orange-50 hover:bg-orange-100 text-orange-800' },
-  { label: 'Employee',            email: 'employee@mesobcenter.et',   password: 'emp123',     style: 'bg-blue-50 hover:bg-blue-100 text-blue-800' },
-  { label: 'Technician',          email: 'technician@mesobcenter.et', password: 'ict123',     style: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800' },
-  { label: 'Citizen',             email: 'citizen@mesobcenter.et',    password: 'citizen123', style: 'bg-green-50 hover:bg-green-100 text-green-800' },
+  { label: 'Super Admin',         email: 'superadmin@mesobcenter.et',   password: 'super123',   style: 'bg-purple-50 hover:bg-purple-100 text-purple-800' },
+  { label: 'MESOB Manager',       email: 'manager@mesobcenter.et',      password: 'manager123', style: 'bg-red-50 hover:bg-red-100 text-red-800' },
+  { label: 'Institution Manager', email: 'inst.manager@mesobcenter.et', password: 'inst123',    style: 'bg-orange-50 hover:bg-orange-100 text-orange-800' },
+  { label: 'Employee',            email: 'employee@mesobcenter.et',     password: 'emp123',     style: 'bg-blue-50 hover:bg-blue-100 text-blue-800' },
+  { label: 'ICT Staff',           email: 'ict.staff@mesobcenter.et',    password: 'ict123',     style: 'bg-cyan-50 hover:bg-cyan-100 text-cyan-800' },
+  { label: 'Citizen',             email: 'citizen@mesobcenter.et',      password: 'citizen123', style: 'bg-green-50 hover:bg-green-100 text-green-800' },
 ];
 
 export default function LoginPage() {

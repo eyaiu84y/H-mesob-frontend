@@ -35,7 +35,7 @@ export default function Hero() {
       className="relative w-full min-h-screen overflow-hidden"
       style={{ backgroundColor: '#1e3a8a' }}
     >
-      {/* Banner Slider */}
+      {/* Banner Slider - Enhanced with better opacity and quality */}
       <div className="absolute inset-0 w-full h-full">
         {slides.map((slide, i) => (
           <div
@@ -44,9 +44,22 @@ export default function Hero() {
               i === current ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <img src={slide.src} alt={slide.alt} className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/60"></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80"></div>
+            {/* High-quality image rendering with optimized settings */}
+            <img 
+              src={slide.src} 
+              alt={slide.alt} 
+              className="w-full h-full object-cover"
+              style={{
+                imageRendering: '-webkit-optimize-contrast',
+                backfaceVisibility: 'hidden',
+                transform: 'translateZ(0)',
+              }}
+              loading="eager"
+            />
+            {/* Lighter overlay for better image visibility (40% instead of 60%) */}
+            <div className="absolute inset-0 bg-black/40"></div>
+            {/* Enhanced gradient overlay with smoother transitions */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/70"></div>
           </div>
         ))}
       </div>

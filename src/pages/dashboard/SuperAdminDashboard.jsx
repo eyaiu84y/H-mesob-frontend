@@ -26,21 +26,7 @@ const ROLE_COLORS = {
   citizen:             'bg-green-50 text-green-800 border-green-200',
 };
 
-// ─── Mock system data ─────────────────────────────────────────────
-const mockAnnouncements = [
-  { id: 1, title: 'Scheduled System Maintenance – Sat Aug 16',   body: 'System maintenance is planned for Aug 16, 2026 from 8–11 PM. All staff should complete pending operations before the window.', date: 'Aug 14, 2026', read: false, author: 'System Admin' },
-  { id: 2, title: 'System Update v2.4.1 Released',               body: 'System update v2.4.1 has been deployed. Changes include improved queue processing performance and security patches. No action required from staff.', date: 'Aug 10, 2026', read: false, author: 'System Admin' },
-  { id: 3, title: 'New Institution Onboarding – Labor & Skills', body: 'Labor & Skills Bureau has been onboarded to Hawassa MESOB. Institution Manager has been assigned. Services are now active.', date: 'Aug 05, 2026', read: true, author: 'System Admin' },
-];
-
-// System activity log - currently unused but available for future use
-// const mockSystemActivity = [
-//   { id: 1, event: 'User login',          user: 'manager@mesobcenter.et',    role: 'mesob_manager',  time: 'Aug 14, 2026  09:14' },
-//   { id: 2, event: 'User login',          user: 'inst.manager@mesobcenter.et', role: 'institution_manager', time: 'Aug 14, 2026  09:02' },
-//   { id: 3, event: 'New user registered', user: 'new.employee@mesobcenter.et', role: 'employee',      time: 'Aug 13, 2026  16:45' },
-//   { id: 4, event: 'Role updated',        user: 'technician@mesobcenter.et',  role: 'technician',     time: 'Aug 12, 2026  11:30' },
-//   { id: 5, event: 'User login',          user: 'citizen@example.com',        role: 'citizen',        time: 'Aug 12, 2026  10:05' },
-// ];
+// No mock data - all data comes from shared data system or real backend
 
 // ─── Helpers ──────────────────────────────────────────────────────
 function getStoredUsers() {
@@ -77,7 +63,8 @@ function StatusBadge({ status }) {
 // ─── SECTION: Dashboard Overview ─────────────────────────────────
 function SectionDashboard({ setActiveSection }) {
   const users = getStoredUsers().map(stripPassword);
-  const unread = mockAnnouncements.filter(a => !a.read).length;
+  const announcements = getAnnouncements({ scope: 'system' });
+  const unread = announcements.filter(a => !a.read).length;
 
   return (
     <>

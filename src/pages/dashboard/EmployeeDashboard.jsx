@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { organizationsData } from '../../data/organizations';
 import { getMaintenanceReports, createMaintenanceReport, getAnnouncements } from '../../utils/sharedData';
+import EmployeeQueueManagement from '../../components/dashboard/EmployeeQueueManagement';
 
 // ─── Navigation sections ────────────────────────────────────────
 const SECTIONS = [
@@ -15,45 +16,17 @@ const SECTIONS = [
   'My Profile',
 ];
 
-// ─── Mock static data (structured for future API replacement) ───
-
-const mockQueue = [
-  { id: '#Q-8841', citizen: 'Meron Tadesse',  service: 'National ID Registration', priority: 'High',   status: 'Waiting' },
-  { id: '#Q-8840', citizen: 'Kebede Worku',   service: 'Business License',          priority: 'Medium', status: 'Waiting' },
-  { id: '#Q-8839', citizen: 'Selamawit A.',   service: 'Tax Clearance',             priority: 'Normal', status: 'Processing' },
-  { id: '#Q-8835', citizen: 'Tigist Alemu',   service: 'SIM Card Registration',     priority: 'Normal', status: 'Waiting' },
-];
-
-const mockApplications = [
-  { id: '#APP-1024', citizen: 'Meron Tadesse',  institution: 'National ID Program',  service: 'National ID Registration',     submitted: 'Aug 11, 2026', status: 'Pending' },
-  { id: '#APP-0987', citizen: 'Kebede Worku',   institution: 'Trade & Market Bureau', service: 'Business License',             submitted: 'Aug 05, 2026', status: 'In Review' },
-  { id: '#APP-0851', citizen: 'Selamawit A.',   institution: 'Ministry of Revenues', service: 'Tax Clearance',                submitted: 'Jul 22, 2026', status: 'Completed' },
-  { id: '#APP-0790', citizen: 'Dawit Bekele',   institution: 'Ethio Telecom',        service: 'SIM Card Registration',        submitted: 'Jul 18, 2026', status: 'Pending' },
-];
-
-// Mock announcements removed - using shared data
-
-
-
-// ─── Priority badge helper ───────────────────────────────────────
-function PriorityBadge({ priority }) {
-  const cls = {
-    High:   'badge bg-red-100 text-red-800',
-    Medium: 'badge bg-amber-100 text-amber-800',
-    Normal: 'badge bg-gray-100 text-gray-700',
-  }[priority] || 'badge bg-gray-100 text-gray-700';
-  return <span className={cls}>{priority}</span>;
-}
-
 // ─── Status badge helper ─────────────────────────────────────────
 function StatusBadge({ status }) {
   const cls = {
-    Pending:    'badge bg-amber-100 text-amber-800',
-    'In Review':'badge bg-blue-100 text-blue-800',
-    Completed:  'badge bg-green-100 text-green-800',
-    Waiting:    'badge bg-amber-100 text-amber-800',
-    Processing: 'badge bg-blue-100 text-blue-800',
-    'In Progress':'badge bg-blue-100 text-blue-800',
+    Submitted:     'badge bg-amber-100 text-amber-800',
+    Assigned:      'badge bg-blue-100 text-blue-800',
+    'In Progress': 'badge bg-blue-100 text-blue-800',
+    Completed:     'badge bg-green-100 text-green-800',
+    Pending:       'badge bg-amber-100 text-amber-800',
+    'In Review':   'badge bg-blue-100 text-blue-800',
+    Waiting:       'badge bg-amber-100 text-amber-800',
+    Processing:    'badge bg-blue-100 text-blue-800',
   }[status] || 'badge bg-gray-100 text-gray-700';
   return <span className={cls}>{status}</span>;
 }
@@ -63,17 +36,21 @@ function SectionDashboard({ setActiveSection }) {
   const [announcements] = useState(() => getAnnouncements({ institution: 'MESOB Center' }));
   const unreadCount = announcements.filter(a => !a.read).length;
   
+  // TODO: Replace with real data from API
+  const myQueueCount = 0; // Will come from queue management system
+  const processedToday = 0; // Will come from queue management system
+  
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="stat-card">
           <p className="text-sm text-gray-500 mb-1">In My Queue</p>
-          <p className="text-2xl font-bold">14</p>
-          <p className="text-xs text-amber-600 mt-1">3 high priority</p>
+          <p className="text-2xl font-bold">{myQueueCount}</p>
+          <p className="text-xs text-gray-500 mt-1">Assigned to you</p>
         </div>
         <div className="stat-card">
           <p className="text-sm text-gray-500 mb-1">Processed Today</p>
-          <p className="text-2xl font-bold">27</p>
+          <p className="text-2xl font-bold">{processedToday}</p>
         </div>
         <div className="stat-card">
           <p className="text-sm text-gray-500 mb-1">Announcements</p>
@@ -93,35 +70,12 @@ function SectionDashboard({ setActiveSection }) {
             View all
           </button>
         </div>
-        <div className="table-container border-0 rounded-none">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Ticket</th>
-                <th>Citizen</th>
-                <th>Service</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockQueue.slice(0, 3).map(item => (
-                <tr key={item.id}>
-                  <td className="font-medium">{item.id}</td>
-                  <td>{item.citizen}</td>
-                  <td>{item.service}</td>
-                  <td><PriorityBadge priority={item.priority} /></td>
-                  <td><StatusBadge status={item.status} /></td>
-                  <td>
-                    <button className="text-blue-600 hover:underline text-sm font-medium">
-                      Process
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="p-6 text-center text-gray-400 py-12">
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p className="text-sm font-medium mb-2">No Queue Items Assigned</p>
+          <p className="text-xs">Queue items assigned to you will appear here.</p>
         </div>
       </div>
 
@@ -134,79 +88,15 @@ function SectionDashboard({ setActiveSection }) {
 
 // ─── SECTION: My Queue ───────────────────────────────────────────
 function SectionMyQueue() {
-  const [queue, setQueue] = useState(mockQueue);
-
-  function handleProcess(id) {
-    setQueue(prev => prev.map(item =>
-      item.id === id
-        ? { ...item, status: item.status === 'Waiting' ? 'Processing' : 'Completed' }
-        : item
-    ));
-  }
-
-  return (
-    <>
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">My Queue</h2>
-        <p className="text-sm text-gray-500">Queue items assigned to you for processing.</p>
-      </div>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Queue Management</h3>
-          <span className="text-sm text-gray-500">{queue.filter(q => q.status !== 'Completed').length} active items</span>
-        </div>
-        <div className="table-container border-0 rounded-none">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Ticket</th>
-                <th>Citizen</th>
-                <th>Service</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {queue.map(item => (
-                <tr key={item.id}>
-                  <td className="font-medium">{item.id}</td>
-                  <td>{item.citizen}</td>
-                  <td>{item.service}</td>
-                  <td><PriorityBadge priority={item.priority} /></td>
-                  <td><StatusBadge status={item.status} /></td>
-                  <td>
-                    {item.status !== 'Completed' ? (
-                      <button
-                        onClick={() => handleProcess(item.id)}
-                        className="text-blue-600 hover:underline text-sm font-medium"
-                      >
-                        {item.status === 'Waiting' ? 'Process' : 'Complete'}
-                      </button>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Done</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
-        <strong>Queue Status Flow:</strong> Waiting → Processing → Completed. Update status as you process each item.
-      </div>
-    </>
-  );
+  return <EmployeeQueueManagement />;
 }
 
 // ─── SECTION: Search Applications ───────────────────────────────
 function SectionSearchApplications() {
   const [query, setQuery] = useState('');
+  const applications = [];
 
-  const filtered = mockApplications.filter(app => {
+  const filtered = applications.filter(app => {
     const q = query.toLowerCase();
     return (
       app.id.toLowerCase().includes(q) ||
@@ -223,7 +113,6 @@ function SectionSearchApplications() {
         <p className="text-sm text-gray-500">Search by Application ID, citizen name, service, or status.</p>
       </div>
 
-      {/* Search input */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <input
@@ -241,46 +130,41 @@ function SectionSearchApplications() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Application Tracking</h3>
-          <span className="text-sm text-gray-500">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
-        </div>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="table-container border-0 rounded-none">
           <table className="data-table">
             <thead>
               <tr>
                 <th>Application ID</th>
                 <th>Citizen</th>
-                <th>Institution</th>
                 <th>Service</th>
-                <th>Submitted</th>
                 <th>Status</th>
-                <th>Action</th>
+                <th>Submitted</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-gray-400 py-6">
-                    No applications match your search.
+                  <td colSpan={6} className="text-center text-gray-400 py-8">
+                    <p className="font-medium text-gray-500">No applications found</p>
+                    <p className="text-sm text-gray-400 mt-1">Try adjusting your search criteria</p>
                   </td>
                 </tr>
-              ) : filtered.map(app => (
-                <tr key={app.id}>
-                  <td className="font-medium">{app.id}</td>
-                  <td>{app.citizen}</td>
-                  <td>{app.institution}</td>
-                  <td>{app.service}</td>
-                  <td>{app.submitted}</td>
-                  <td><StatusBadge status={app.status} /></td>
-                  <td>
-                    <button className="text-blue-600 hover:underline text-sm font-medium">
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              ) : (
+                filtered.map(app => (
+                  <tr key={app.id}>
+                    <td className="font-medium">{app.id}</td>
+                    <td>{app.citizen}</td>
+                    <td>{app.service}</td>
+                    <td><StatusBadge status={app.status} /></td>
+                    <td>{app.submitted}</td>
+                    <td className="text-right">
+                      <button className="text-blue-600 hover:underline text-sm font-medium">View</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -289,109 +173,73 @@ function SectionSearchApplications() {
   );
 }
 
-// ─── SECTION: Service Requirements ──────────────────────────────
+// ─── SECTION: Service Requirements ───────────────────────────────
 function SectionServiceRequirements() {
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [openSvc, setOpenSvc] = useState(null);
-
-  if (selectedOrg) {
-    const org = organizationsData.find(o => o.id === selectedOrg);
-    return (
-      <>
-        <div className="mb-6 flex items-center gap-3">
-          <button
-            onClick={() => { setSelectedOrg(null); setOpenSvc(null); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Institutions
-          </button>
-          <span className="text-gray-400">/</span>
-          <span className="text-sm font-semibold text-gray-900">{org.name_en}</span>
-        </div>
-
-        <div className="space-y-3">
-          {org.services.map((svc, i) => (
-            <div key={i} className={`svc-item${openSvc === i ? ' open' : ''}`}>
-              <button
-                type="button"
-                className="svc-toggle"
-                onClick={() => setOpenSvc(openSvc === i ? null : i)}
-              >
-                <span>{svc.title_en}</span>
-                <svg className="svc-chevron" xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <div className="svc-panel">
-                <div className="svc-meta">
-                  <div><span>Processing Time</span><br /><strong>{svc.time}</strong></div>
-                  <div><span>Service Fee</span><br /><strong>{svc.fee}</strong></div>
-                </div>
-                <div className="svc-docs-title">Documents Required</div>
-                <ul className="svc-docs">
-                  {svc.docs_en.map((doc, j) => <li key={j}>{doc}</li>)}
-                </ul>
-              </div>
-            </div>
-          ))}
-        </div>
-      </>
-    );
-  }
+  const { user } = useAuth();
+  const institution = organizationsData.find(org => org.name_en === user?.institution);
+  const services = institution?.services || [];
 
   return (
     <>
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Service Requirements</h2>
-        <p className="text-sm text-gray-500">View required documents, fees, and processing time for each institution and service.</p>
+        <p className="text-sm text-gray-500">Document requirements and processing information for your institution's services.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {organizationsData.map(org => (
-          <button
-            key={org.id}
-            onClick={() => setSelectedOrg(org.id)}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left hover:border-blue-300 hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <img
-                src={org.image}
-                alt={org.name_en}
-                className="w-10 h-10 object-contain rounded-lg bg-gray-50 p-1"
-                onError={e => { e.target.style.display = 'none'; }}
-              />
-              <span className="font-semibold text-sm text-gray-900 leading-snug">{org.name_en}</span>
+      <div className="space-y-4">
+        {services.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <p className="font-medium text-gray-500">No services found</p>
+            <p className="text-sm text-gray-400 mt-1">No services are configured for your institution.</p>
+          </div>
+        ) : (
+          services.map((service, idx) => (
+            <div key={idx} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{service.title_en}</h3>
+                  <p className="text-sm text-gray-500">{service.title_am}</p>
+                </div>
+                <div className="flex gap-4 text-sm">
+                  <div>
+                    <p className="text-xs text-gray-500">Time</p>
+                    <p className="font-medium text-gray-700">{service.time}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Fee</p>
+                    <p className="font-medium text-gray-700">{service.fee}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <p className="text-xs font-medium text-gray-700 mb-2">Required Documents:</p>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {service.docs_en?.map((doc, docIdx) => (
+                    <li key={docIdx} className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-1">•</span>
+                      <span>{doc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
-            <p className="text-xs text-gray-500">
-              {org.services.length} service{org.services.length !== 1 ? 's' : ''}
-            </p>
-          </button>
-        ))}
+          ))
+        )}
       </div>
     </>
   );
 }
 
-// ─── SECTION: Maintenance Report ─────────────────────────────────
-// PROBLEM TYPES - matching Telegram bot specification
-const PROBLEM_TYPES = [
-  'Computer / Hardware',
-  'Network / Internet',
-  'Software',
-  'Printer / Scanner',
-  'Electrical / Power',
-  'Other',
-];
-
-function SectionMaintenanceReport({ user }) {
-  const [reports, setReports] = useState([]);
-  const [view, setView] = useState('list'); // 'list' | 'new' | 'detail'
-  const [selectedReport, setSelectedReport] = useState(null);
-  const [form, setForm] = useState({
+// ─── SECTION: Maintenance Report ───────────────────────────────
+function SectionMaintenanceReport() {
+  const { user } = useAuth();
+  const [reports, setReports] = useState(() => getMaintenanceReports({ reportedBy: user?.employeeId }));
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [newReport, setNewReport] = useState({
     institution: user?.institution || '',
     employeeId: user?.employeeId || '',
     employeeName: user?.name || '',
@@ -399,532 +247,326 @@ function SectionMaintenanceReport({ user }) {
     description: '',
     location: '',
     officeNumber: '',
-    photo: null,
-    photoPreview: null,
   });
-  const [formError, setFormError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
 
-  // Load reports on mount and when user changes
-  useEffect(() => {
-    function loadReports() {
-      const employeeReports = getMaintenanceReports({ reportedBy: user?.email });
-      setReports(employeeReports);
-    }
-    loadReports();
-  }, [user?.email]);
+  // Problem type options - matching Telegram bot workflow
+  const problemTypes = [
+    'Computer / Hardware',
+    'Network / Internet',
+    'Software',
+    'Printer / Scanner',
+    'Electrical / Power',
+    'Other'
+  ];
 
-  function handlePhotoSelect(e) {
+  // Handle photo selection
+  function handlePhotoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file is image
+    // Validate file type
     if (!file.type.startsWith('image/')) {
-      setFormError('Please select a valid image file (JPEG, PNG, etc.).');
+      alert('Please select an image file (JPG, PNG, GIF, etc.)');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setFormError('Image file size must be less than 5MB.');
+      alert('Photo size must be less than 5MB');
       return;
     }
+
+    setPhotoFile(file);
 
     // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
-      setForm(f => ({
-        ...f,
-        photo: file.name,
-        photoPreview: reader.result,
-      }));
-      setFormError('');
+      setPhotoPreview(reader.result);
     };
     reader.readAsDataURL(file);
   }
 
-  function removePhoto() {
-    setForm(f => ({ ...f, photo: null, photoPreview: null }));
+  // Remove photo
+  function handleRemovePhoto() {
+    setPhotoFile(null);
+    setPhotoPreview(null);
   }
 
+  // Validate form
   function validateForm() {
-    if (!form.institution.trim()) return 'Institution is required.';
-    if (!form.employeeId.trim()) return 'Employee ID is required.';
-    if (!form.employeeName.trim()) return 'Employee name is required.';
-    if (!form.problemType) return 'Problem type is required.';
-    if (!form.description.trim()) return 'Problem description is required.';
-    if (!form.location.trim()) return 'Location is required.';
-    if (!form.officeNumber.trim()) return 'Office number is required.';
-    if (!form.photo) return 'Problem photo is required.';
-    return null;
+    const errors = {};
+
+    if (!newReport.institution.trim()) errors.institution = 'Institution is required';
+    if (!newReport.employeeId.trim()) errors.employeeId = 'Employee ID is required';
+    if (!newReport.employeeName.trim()) errors.employeeName = 'Employee name is required';
+    if (!newReport.problemType) errors.problemType = 'Problem type is required';
+    if (!newReport.description.trim()) errors.description = 'Problem description is required';
+    if (!newReport.location.trim()) errors.location = 'Location is required';
+    if (!newReport.officeNumber.trim()) errors.officeNumber = 'Office number is required';
+    if (!photoPreview) errors.photo = 'Problem photo is required';
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-
-    const error = validateForm();
-    if (error) {
-      setFormError(error);
+    
+    if (!validateForm()) {
       return;
     }
 
-    const result = createMaintenanceReport({
-      institution: form.institution.trim(),
-      employeeId: form.employeeId.trim(),
-      employeeName: form.employeeName.trim(),
-      problemType: form.problemType,
-      description: form.description.trim(),
-      location: form.location.trim(),
-      officeNumber: form.officeNumber.trim(),
-      photo: form.photo,
-      photoPreview: form.photoPreview,
-      reportedBy: user?.email,
-      reportedByName: user?.name,
-    });
-
-    if (result.success) {
-      setSubmitSuccess(result.report);
-      setForm({
-        institution: user?.institution || '',
-        employeeId: user?.employeeId || '',
-        employeeName: user?.name || '',
-        problemType: '',
-        description: '',
-        location: '',
-        officeNumber: '',
-        photo: null,
-        photoPreview: null,
+    setIsSubmitting(true);
+    setTimeout(() => {
+      const result = createMaintenanceReport({
+        ...newReport,
+        reportedBy: user?.employeeId,
+        photoPreview: photoPreview, // Store base64 image
       });
-      setFormError('');
-      
-      // Reload reports after 3 seconds
-      setTimeout(() => {
-        const employeeReports = getMaintenanceReports({ reportedBy: user?.email });
-        setReports(employeeReports);
-        setSubmitSuccess(null);
-        setView('list');
-      }, 3000);
-    } else {
-      setFormError(result.message || 'Failed to submit report.');
-    }
+
+      if (result.success) {
+        // Reset form
+        setNewReport({
+          institution: user?.institution || '',
+          employeeId: user?.employeeId || '',
+          employeeName: user?.name || '',
+          problemType: '',
+          description: '',
+          location: '',
+          officeNumber: '',
+        });
+        setPhotoFile(null);
+        setPhotoPreview(null);
+        setFormErrors({});
+        setShowForm(false);
+        setReports(getMaintenanceReports({ reportedBy: user?.employeeId }));
+        
+        // Show success message with report details
+        alert(`Maintenance report submitted successfully!\n\nReport ID: ${result.report.id}\nSubmitted by: ${result.report.employeeName}\nEmployee ID: ${result.report.employeeId}\nInstitution: ${result.report.institution}\nStatus: ${result.report.status}`);
+      }
+      setIsSubmitting(false);
+    }, 1000);
   }
 
-  // Success message view
-  if (submitSuccess) {
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => { setSubmitSuccess(null); setView('list'); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Reports
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-2xl">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Maintenance Report Submitted Successfully</h2>
-            <p className="text-sm text-gray-500">Your maintenance problem has been reported. The Institution Manager will review and assign a technician.</p>
-          </div>
-
-          <div className="bg-gray-50 rounded-xl p-5 space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Report ID:</span>
-              <span className="font-semibold text-gray-900">{submitSuccess.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Submitted by:</span>
-              <span className="font-medium text-gray-900">{submitSuccess.employeeName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Employee ID:</span>
-              <span className="font-medium text-gray-900">{submitSuccess.employeeId}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Institution:</span>
-              <span className="font-medium text-gray-900">{submitSuccess.institution}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Problem Type:</span>
-              <span className="font-medium text-gray-900">{submitSuccess.problemType}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Location:</span>
-              <span className="font-medium text-gray-900">{submitSuccess.location}, Office {submitSuccess.officeNumber}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Status:</span>
-              <span className="badge bg-green-100 text-green-800">Submitted</span>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Report detail view
-  if (view === 'detail' && selectedReport) {
-    const report = reports.find(r => r.id === selectedReport) || null;
-    if (!report) {
-      setView('list');
-      return null;
-    }
-
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => { setView('list'); setSelectedReport(null); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Reports
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-3xl">
-          <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-6 border-b border-gray-100">
-            <div>
-              <p className="text-xs text-gray-400 mb-1">{report.id}</p>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Maintenance Report Details</h2>
-              <div className="flex gap-2">
-                <StatusBadge status={report.status} />
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-sm">
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Reporter Information</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Employee Name:</span>
-                    <span className="font-medium text-gray-900">{report.employeeName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Employee ID:</span>
-                    <span className="font-medium text-gray-900">{report.employeeId}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Institution:</span>
-                    <span className="font-medium text-gray-900">{report.institution}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Problem Information</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Problem Type:</span>
-                    <span className="font-medium text-gray-900">{report.problemType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Location:</span>
-                    <span className="font-medium text-gray-900">{report.location}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Office Number:</span>
-                    <span className="font-medium text-gray-900">{report.officeNumber}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-1">Status Information</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Submitted:</span>
-                    <span className="font-medium text-gray-900">{report.date}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Status:</span>
-                    <StatusBadge status={report.status} />
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Assigned To:</span>
-                    <span className="font-medium text-gray-900">{report.assignedTo || <span className="text-gray-400">Not assigned yet</span>}</span>
-                  </div>
-                  {report.taskId && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Task ID:</span>
-                      <span className="font-medium text-gray-900">{report.taskId}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Description</p>
-            <p className="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">{report.description}</p>
-          </div>
-
-          {report.photoPreview && (
-            <div>
-              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Photo</p>
-              <img
-                src={report.photoPreview}
-                alt="Problem photo"
-                className="max-w-md w-full rounded-xl border border-gray-200 shadow-sm"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800 max-w-3xl">
-          <strong>Report Status:</strong> You will be notified when the Institution Manager assigns a technician and when the problem is resolved.
-        </div>
-      </>
-    );
-  }
-
-  // New report form view
-  if (view === 'new') {
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => { setView('list'); setFormError(''); }}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Cancel
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 max-w-3xl">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Report Maintenance Problem</h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Institution Information */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Location Information</h3>
-              
-              <div className="grid grid-cols-1 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Institution <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={form.institution}
-                    onChange={e => setForm(f => ({ ...f, institution: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm bg-white"
-                  >
-                    <option value="">Select institution where problem occurred...</option>
-                    {organizationsData.map(org => (
-                      <option key={org.id} value={org.name_en}>{org.name_en}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Employee Information */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Reporter Information</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Employee ID <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.employeeId}
-                    readOnly
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Auto-populated from your profile</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Employee Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={form.employeeName}
-                    readOnly
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">Auto-populated from your profile</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Problem Information */}
-            <div className="border-b border-gray-200 pb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Problem Details</h3>
-              
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Problem Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={form.problemType}
-                    onChange={e => setForm(f => ({ ...f, problemType: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm bg-white"
-                  >
-                    <option value="">Select problem type...</option>
-                    {PROBLEM_TYPES.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                    Problem Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    rows={5}
-                    value={form.description}
-                    onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                    placeholder="Describe the technical/maintenance problem clearly and in detail..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm resize-y"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Location <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.location}
-                      onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                      placeholder="e.g. 2nd Floor, East Wing"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Office Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={form.officeNumber}
-                      onChange={e => setForm(f => ({ ...f, officeNumber: e.target.value }))}
-                      placeholder="e.g. 201, 305B"
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Photo Upload */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">Attach Photo of Problem</h3>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Problem Photo <span className="text-red-500">*</span>
-                </label>
-                
-                {!form.photoPreview ? (
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoSelect}
-                      className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Upload a clear photo showing the maintenance problem. Max file size: 5MB. Accepted formats: JPEG, PNG, GIF.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="relative inline-block">
-                      <img
-                        src={form.photoPreview}
-                        alt="Problem preview"
-                        className="max-w-sm w-full rounded-xl border border-gray-200 shadow-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={removePhoto}
-                        className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg transition"
-                        aria-label="Remove photo"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500">Selected: {form.photo}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Error message */}
-            {formError && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-4 py-3">
-                {formError}
-              </div>
-            )}
-
-            {/* Submit button */}
-            <button
-              type="submit"
-              className="w-full px-6 py-3 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-xl transition text-sm"
-            >
-              Submit Maintenance Report
-            </button>
-          </form>
-        </div>
-
-        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800 max-w-3xl mt-6">
-          <strong>Important:</strong> All fields marked with <span className="text-red-500">*</span> are required. Your report will be reviewed by the Institution Manager who will assign a technician to resolve the problem.
-        </div>
-      </>
-    );
-  }
-
-  // Report list view (default)
   return (
     <>
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Maintenance Report</h2>
-          <p className="text-sm text-gray-500">Report technical or maintenance problems encountered during work.</p>
-        </div>
-        <button
-          onClick={() => setView('new')}
-          className="px-4 py-2 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Report Maintenance Problem
-        </button>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Maintenance Report</h2>
+        <p className="text-sm text-gray-500">Report technical issues or maintenance requirements.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      {!showForm ? (
+        <div className="mb-6">
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Report Maintenance Problem
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Submit New Maintenance Report</h3>
+            <button
+              onClick={() => {
+                setShowForm(false);
+                setFormErrors({});
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Institution */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Institution <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newReport.institution}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">Your assigned institution</p>
+              {formErrors.institution && <p className="text-xs text-red-600 mt-1">{formErrors.institution}</p>}
+            </div>
+
+            {/* Employee ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Employee ID <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newReport.employeeId}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">Your employee ID</p>
+              {formErrors.employeeId && <p className="text-xs text-red-600 mt-1">{formErrors.employeeId}</p>}
+            </div>
+
+            {/* Employee Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Employee Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newReport.employeeName}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 cursor-not-allowed"
+                disabled
+              />
+              <p className="text-xs text-gray-500 mt-1">Your full name</p>
+              {formErrors.employeeName && <p className="text-xs text-red-600 mt-1">{formErrors.employeeName}</p>}
+            </div>
+
+            {/* Problem Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Problem Type <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={newReport.problemType}
+                onChange={e => setNewReport({...newReport, problemType: e.target.value})}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
+              >
+                <option value="">Select problem type...</option>
+                {problemTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+              {formErrors.problemType && <p className="text-xs text-red-600 mt-1">{formErrors.problemType}</p>}
+            </div>
+
+            {/* Problem Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Problem Description <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={newReport.description}
+                onChange={e => setNewReport({...newReport, description: e.target.value})}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none h-24"
+                placeholder="Describe the problem clearly..."
+              />
+              {formErrors.description && <p className="text-xs text-red-600 mt-1">{formErrors.description}</p>}
+            </div>
+
+            {/* Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newReport.location}
+                onChange={e => setNewReport({...newReport, location: e.target.value})}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
+                placeholder="e.g., 2nd Floor, Building A"
+              />
+              {formErrors.location && <p className="text-xs text-red-600 mt-1">{formErrors.location}</p>}
+            </div>
+
+            {/* Office Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Office Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={newReport.officeNumber}
+                onChange={e => setNewReport({...newReport, officeNumber: e.target.value})}
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
+                placeholder="e.g., Room 204"
+              />
+              {formErrors.officeNumber && <p className="text-xs text-red-600 mt-1">{formErrors.officeNumber}</p>}
+            </div>
+
+            {/* Problem Photo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Attach Photo of Problem <span className="text-red-500">*</span>
+              </label>
+              {!photoPreview ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <label htmlFor="photo-upload" className="cursor-pointer">
+                    <svg className="w-12 h-12 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p className="text-sm text-gray-600 font-medium">Click to upload photo</p>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 5MB</p>
+                  </label>
+                </div>
+              ) : (
+                <div className="border border-gray-300 rounded-lg p-4">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={photoPreview}
+                      alt="Problem preview"
+                      className="w-32 h-32 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 mb-1">Photo attached</p>
+                      <p className="text-xs text-gray-500 mb-3">{photoFile?.name}</p>
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Remove photo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {formErrors.photo && <p className="text-xs text-red-600 mt-1">{formErrors.photo}</p>}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Maintenance Report'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForm(false);
+                  setFormErrors({});
+                }}
+                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Report History */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">My Maintenance Reports</h3>
-          <span className="text-sm text-gray-500">{reports.length} report{reports.length !== 1 ? 's' : ''}</span>
         </div>
         <div className="table-container border-0 rounded-none">
           <table className="data-table">
@@ -935,368 +577,269 @@ function SectionMaintenanceReport({ user }) {
                 <th>Problem Type</th>
                 <th>Location</th>
                 <th>Office</th>
-                <th>Date</th>
+                <th>Submitted</th>
                 <th>Status</th>
                 <th>Assigned To</th>
-                <th>Action</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
               {reports.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="text-center text-gray-400 py-6">
-                    No maintenance reports submitted yet.
+                  <td colSpan={9} className="text-center text-gray-400 py-8">
+                    <p className="font-medium text-gray-500">No maintenance reports yet</p>
+                    <p className="text-sm text-gray-400 mt-1">Click "Report Maintenance Problem" to submit your first report</p>
                   </td>
                 </tr>
-              ) : reports.map(r => (
-                <tr key={r.id}>
-                  <td className="font-medium">{r.id}</td>
-                  <td>{r.institution}</td>
-                  <td>{r.problemType}</td>
-                  <td>{r.location}</td>
-                  <td>{r.officeNumber}</td>
-                  <td>{r.date}</td>
-                  <td><StatusBadge status={r.status} /></td>
-                  <td>{r.assignedTo || <span className="text-gray-400">—</span>}</td>
-                  <td>
-                    <button
-                      onClick={() => { setSelectedReport(r.id); setView('detail'); }}
-                      className="text-blue-600 hover:underline text-sm font-medium"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              ) : (
+                reports.map(report => (
+                  <tr key={report.id}>
+                    <td className="font-medium">{report.id}</td>
+                    <td>{report.institution}</td>
+                    <td>{report.problemType}</td>
+                    <td>{report.location}</td>
+                    <td>{report.officeNumber}</td>
+                    <td>{report.date}</td>
+                    <td><StatusBadge status={report.status} /></td>
+                    <td>{report.assignedTo || <span className="text-gray-400">—</span>}</td>
+                    <td className="text-right">
+                      <button className="text-blue-600 hover:underline text-sm font-medium">View</button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
-        <strong>Maintenance Reporting:</strong> Report technical problems here. Your Institution Manager will review and assign a Technician. You cannot assign tasks yourself. Track your report status in the table above.
+      <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
+        <strong>How it works:</strong> Submit a maintenance report with complete problem details and photo. Your institution manager will review it and assign a technician. You can track the progress of your report here.
       </div>
     </>
   );
 }
 
-// ─── SECTION: Reports ────────────────────────────────────────────
+// ─── SECTION: Reports ───────────────────────────────────────────
 function SectionReports() {
-  const completed = mockApplications.filter(a => a.status === 'Completed').length;
-  const pending   = mockApplications.filter(a => a.status === 'Pending').length;
-  const inReview  = mockApplications.filter(a => a.status === 'In Review').length;
-
   return (
     <>
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Reports</h2>
-        <p className="text-sm text-gray-500">Your operational activity summary.</p>
+        <p className="text-sm text-gray-500">View and generate reports.</p>
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="stat-card">
-          <p className="text-sm text-gray-500 mb-1">Completed Today</p>
-          <p className="text-2xl font-bold text-green-600">27</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-sm text-gray-500 mb-1">Processed This Week</p>
-          <p className="text-2xl font-bold">134</p>
-        </div>
-        <div className="stat-card">
-          <p className="text-sm text-gray-500 mb-1">Avg. Processing Time</p>
-          <p className="text-2xl font-bold">1.4 days</p>
-        </div>
-      </div>
-
-      {/* Application status breakdown */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Application Status Breakdown</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-100">
-            <span className="badge bg-green-100 text-green-800">Completed</span>
-            <span className="text-2xl font-bold text-gray-900">{completed}</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-100">
-            <span className="badge bg-amber-100 text-amber-800">Pending</span>
-            <span className="text-2xl font-bold text-gray-900">{pending}</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-50 border border-blue-100">
-            <span className="badge bg-blue-100 text-blue-800">In Review</span>
-            <span className="text-2xl font-bold text-gray-900">{inReview}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Queue activity */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">Recent Queue Activity</h3>
-        </div>
-        <div className="table-container border-0 rounded-none">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Ticket</th>
-                <th>Service</th>
-                <th>Priority</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockQueue.map(item => (
-                <tr key={item.id}>
-                  <td className="font-medium">{item.id}</td>
-                  <td>{item.service}</td>
-                  <td><PriorityBadge priority={item.priority} /></td>
-                  <td><StatusBadge status={item.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
-        <strong>Note:</strong> Reports reflect your personal operational scope. MESOB-wide analytics are available to MESOB Manager and Super Admin only.
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+        <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <p className="font-medium text-gray-500">Reports Coming Soon</p>
+        <p className="text-sm text-gray-400 mt-1">Report generation will be available soon.</p>
       </div>
     </>
   );
 }
 
-// ─── SECTION: Announcements ──────────────────────────────────────
+// ─── SECTION: Announcements ─────────────────────────────────────
 function SectionAnnouncements() {
-  const [announcements, setAnnouncements] = useState(() => getAnnouncements({ institution: 'MESOB Center' }));
-  const [selected, setSelected] = useState(null);
-
-  function markRead(id) {
-    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
-  }
-
-  if (selected) {
-    const ann = announcements.find(a => a.id === selected);
-    return (
-      <>
-        <div className="mb-6">
-          <button
-            onClick={() => setSelected(null)}
-            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Announcements
-          </button>
-        </div>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">{ann.title}</h2>
-            {!ann.read && (
-              <span className="badge bg-blue-100 text-blue-800 flex-shrink-0">New</span>
-            )}
-          </div>
-          <p className="text-sm text-gray-500 mb-4">{ann.date}</p>
-          <p className="text-sm text-gray-700 leading-relaxed">{ann.body}</p>
-        </div>
-      </>
-    );
-  }
+  const { user } = useAuth();
+  const [announcements] = useState(() => getAnnouncements({ institution: user?.institution }));
 
   return (
     <>
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Announcements</h2>
-        <p className="text-sm text-gray-500">Operational announcements and notifications.</p>
+        <p className="text-sm text-gray-500">Latest updates and notices from MESOB Center.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {announcements.length === 0 ? (
-          <div className="text-center text-gray-400 py-12">No announcements available.</div>
-        ) : announcements.map(ann => (
-          <div
-            key={ann.id}
-            onClick={() => { setSelected(ann.id); markRead(ann.id); }}
-            className={`bg-white rounded-2xl border shadow-sm p-5 cursor-pointer hover:shadow-md transition-all duration-200 ${
-              ann.read ? 'border-gray-100' : 'border-blue-200 bg-blue-50/30'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  {!ann.read && (
-                    <span className="inline-block w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
-                  )}
-                  <h3 className="font-semibold text-sm text-gray-900 leading-snug">{ann.title}</h3>
-                </div>
-                <p className="text-xs text-gray-500">{ann.date}</p>
-              </div>
-              <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <p className="font-medium text-gray-500">No announcements</p>
+            <p className="text-sm text-gray-400 mt-1">Check back later for updates.</p>
           </div>
-        ))}
+        ) : (
+          announcements.map(announcement => (
+            <div key={announcement.id} className={`bg-white rounded-xl border p-5 shadow-sm ${!announcement.read ? 'border-blue-200' : 'border-gray-100'}`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${!announcement.read ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-semibold text-gray-900">{announcement.title}</h3>
+                    {!announcement.read && <span className="badge bg-blue-100 text-blue-700 text-xs">New</span>}
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{announcement.content}</p>
+                  <p className="text-xs text-gray-500">{announcement.date}</p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </>
   );
 }
 
-// ─── SECTION: My Profile ─────────────────────────────────────────
-function SectionMyProfile({ user }) {
+// ─── SECTION: My Profile ────────────────────────────────────────
+function SectionMyProfile() {
+  const { user } = useAuth();
+
   return (
     <>
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">My Profile</h2>
-        <p className="text-sm text-gray-500">Your account information.</p>
+        <p className="text-sm text-gray-500">Manage your profile and preferences.</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6 max-w-lg">
-        <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold flex-shrink-0">
-            {user?.name?.charAt(0) || 'E'}
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900">{user?.name}</p>
-            <p className="text-sm text-gray-500">{user?.email}</p>
-            <span className="badge bg-blue-100 text-blue-800 mt-1">Employee</span>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4">Personal Information</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    defaultValue={user?.name || ''}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    defaultValue={user?.email || ''}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID</label>
+                  <input
+                    type="text"
+                    defaultValue={user?.employeeId || ''}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Institution</label>
+                  <input
+                    type="text"
+                    defaultValue={user?.institution || ''}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50"
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+            <button className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+              Save Changes
+            </button>
           </div>
         </div>
-        <div className="space-y-4 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-500">Full Name</span>
-            <span className="font-medium text-gray-900">{user?.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Email</span>
-            <span className="font-medium text-gray-900">{user?.email}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Role</span>
-            <span className="font-medium text-gray-900">Employee</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">Institution</span>
-            <span className="font-medium text-gray-900">MESOB Center</span>
-          </div>
-        </div>
-      </div>
 
-      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
-        <strong>Note:</strong> To update your profile information or change your password, contact your Institution Manager or MESOB administration.
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm opacity-90">Account Status</p>
+              <p className="text-xl font-bold">Active</p>
+            </div>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="opacity-90">Role:</span>
+              <span className="font-medium">Employee</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="opacity-90">Institution:</span>
+              <span className="font-medium">{user?.institution || 'Not assigned'}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
 }
 
-// ─── Main EmployeeDashboard ──────────────────────────────────────
+// ─── Main Employee Dashboard component ───────────────────────────
 export default function EmployeeDashboard() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('Dashboard');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  function navigate(section) {
-    setActiveSection(section);
-    setSidebarOpen(false);
-  }
-
-  function renderSection() {
-    switch (activeSection) {
-      case 'Dashboard':            return <SectionDashboard setActiveSection={navigate} />;
-      case 'My Queue':             return <SectionMyQueue />;
-      case 'Search Applications':  return <SectionSearchApplications />;
-      case 'Service Requirements': return <SectionServiceRequirements />;
-      case 'Maintenance Report':   return <SectionMaintenanceReport user={user} />;
-      case 'Reports':              return <SectionReports />;
-      case 'Announcements':        return <SectionAnnouncements />;
-      case 'My Profile':           return <SectionMyProfile user={user} />;
-      default:                     return <SectionDashboard setActiveSection={navigate} />;
-    }
-  }
+  if (!user) return null;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="flex min-h-screen">
-
-        {/* ── Sidebar ── */}
-        <aside className={`db-sidebar fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-200${sidebarOpen ? ' open' : ''}`}>
-          <div className="p-5 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
-                E
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">MESOB Center</p>
-                <p className="text-xs text-gray-500">Employee Portal</p>
-              </div>
-            </div>
-          </div>
-
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {SECTIONS.map(section => (
-              <button
-                key={section}
-                onClick={() => navigate(section)}
-                className={`sidebar-link w-full text-left${activeSection === section ? ' active' : ''}`}
-              >
-                {section}
-              </button>
-            ))}
-          </nav>
-
-          <div className="p-4 border-t border-gray-100">
-            <button
-              onClick={() => { localStorage.removeItem('mesob_auth'); window.location.href = '/'; }}
-              className="sidebar-link w-full text-left text-red-600 hover:bg-red-50"
-            >
-              Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* ── Main content ── */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="bg-white border-b border-gray-200 px-4 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-30">
-            <div className="flex items-center gap-3">
-              {/* Mobile hamburger */}
-              <button
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-                onClick={() => setSidebarOpen(o => !o)}
-                aria-label="Toggle sidebar"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <line x1="4" x2="20" y1="6" y2="6"/>
-                  <line x1="4" x2="20" y1="12" y2="12"/>
-                  <line x1="4" x2="20" y1="18" y2="18"/>
-                </svg>
-              </button>
-              <h1 className="text-lg font-semibold text-gray-900">
-                {activeSection === 'Dashboard' ? 'Employee Dashboard' : activeSection}
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="badge bg-blue-100 text-blue-800">Employee</span>
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                <p className="text-xs text-gray-500">{user?.email}</p>
-              </div>
-            </div>
-          </header>
-
-          <main className="flex-1 p-4 lg:p-8">
-            {renderSection()}
-          </main>
+    <div className="flex min-h-screen bg-gray-50">
+      <aside className="w-64 bg-white border-r border-gray-200 p-4 hidden lg:block">
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-gray-900">MESOB Center</h2>
+          <p className="text-sm text-gray-500">Employee Portal</p>
         </div>
-      </div>
+        
+        <nav className="space-y-1">
+          {SECTIONS.map(section => (
+            <button
+              key={section}
+              onClick={() => setActiveSection(section)}
+              className={`sidebar-link w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition ${
+                activeSection === section 
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {section}
+            </button>
+          ))}
+        </nav>
 
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+              {user.name.charAt(0)}
+            </div>
+            <div>
+              <p className="font-medium text-gray-900 text-sm">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.institution || 'Not assigned'}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => { localStorage.removeItem('mesob_auth'); window.location.href = '/'; }}
+            className="sidebar-link w-full text-left text-red-600 hover:bg-red-50"
+          >
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 p-6 lg:p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">Employee Dashboard</h1>
+            <p className="text-gray-600">Welcome back, {user.name.split(' ')[0]}</p>
+          </div>
+
+          {activeSection === 'Dashboard' && <SectionDashboard setActiveSection={setActiveSection} />}
+          {activeSection === 'My Queue' && <SectionMyQueue />}
+          {activeSection === 'Search Applications' && <SectionSearchApplications />}
+          {activeSection === 'Service Requirements' && <SectionServiceRequirements />}
+          {activeSection === 'Maintenance Report' && <SectionMaintenanceReport />}
+          {activeSection === 'Reports' && <SectionReports />}
+          {activeSection === 'Announcements' && <SectionAnnouncements />}
+          {activeSection === 'My Profile' && <SectionMyProfile />}
+        </div>
+      </main>
     </div>
   );
 }

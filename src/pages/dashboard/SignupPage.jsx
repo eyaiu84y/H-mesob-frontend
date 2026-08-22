@@ -49,7 +49,9 @@ export default function SignupPage() {
     
     if (password !== confirm) { setError('Passwords do not match.'); return; }
 
-    // Public signup always creates Citizen accounts only
+    // Public signup ONLY creates Citizen accounts - STAFF ROLES BLOCKED
+    // Staff roles (super_admin, mesob_manager, institution_manager, employee, technician)
+    // can ONLY be created by Super Admin through User Management
     const result = signup(name, email, password, 'citizen');
     if (!result.success) {
       setError(result.message);
@@ -147,9 +149,12 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-blue-900 mb-1">Citizen Account</h4>
+                  <h4 className="text-sm font-semibold text-blue-900 mb-1">Citizen Account Only</h4>
+                  <p className="text-xs text-blue-700 leading-relaxed mb-2">
+                    Public registration creates Citizen accounts only. You cannot self-register as staff.
+                  </p>
                   <p className="text-xs text-blue-700 leading-relaxed">
-                    Public registration creates a Citizen account. Staff accounts (Employee, Technician, Manager roles) are created by administrators only.
+                    <strong>Staff accounts</strong> (Super Admin, MESOB Manager, Institution Manager, Employee, ICT Staff) can only be created by administrators.
                   </p>
                 </div>
               </div>

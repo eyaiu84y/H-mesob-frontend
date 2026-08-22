@@ -120,25 +120,74 @@ function SectionDashboard({ setActiveSection, user }) {
 function SectionMyTasks({ user }) {
   const [tasks, setTasks] = useState(() => getMaintenanceTasks({ assignedTo: user?.name }));
   const [selectedTask, setSelectedTask] = useState(null);
+  const [showResolutionModal, setShowResolutionModal] = useState(false);
+  const [resolution, setResolution] = useState('');
+  const [resolutionError, setResolutionError] = useState('');
 
   function advanceStatus(id) {
     const task = tasks.find(t => t.id === id);
     if (!task) return;
 
-    const statusMap = {
-      'Assigned': 'In Progress',
-      'In Progress': 'Completed',
-    };
+    // If task is "In Progress", show resolution form instead of completing directly
+    if (task.status === 'In Progress') {
+      setShowResolutionModal(true);
+      setResolution('');
+      setResolutionError('');
+      return;
+    }
 
-    const newStatus = statusMap[task.status];
-    if (!newStatus) return;
-
-    const result = updateMaintenanceTask(id, { status: newStatus });
-    if (result.success) {
-      setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
-      if (selectedTask?.id === id) {
-        setSelectedTask(prev => ({ ...prev, status: newStatus }));
+    // For "Assigned" → "In Progress", proceed directly
+    if (task.status === 'Assigned') {
+      const result = updateMaintenanceTask(id, { status: 'In Progress' });
+      if (result.success) {
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: 'In Progress' } : t));
+        if (selectedTask?.id === id) {
+          setSelectedTask(prev => ({ ...prev, status: 'In Progress' }));
+        }
       }
+    }
+  }
+
+  function handleCompleteTask() {
+    // Validate resolution
+    if (!resolution.trim()) {
+      setResolutionError('Resolution is required');
+      return;
+    }
+    if (resolution.trim().length < 20) {
+      setResolutionError('Resolution must be at least 20 characters');
+      return;
+    }
+
+    const task = selectedTask;
+    if (!task) return;
+
+    const completedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const result = updateMaintenanceTask(task.id, {
+      status: 'Completed',
+      resolution: resolution.trim(),
+      completedDate: completedDate,
+      completedBy: user?.name,
+    });
+
+    if (result.success) {
+      setTasks(prev => prev.map(t => t.id === task.id ? {
+        ...t,
+        status: 'Completed',
+        resolution: resolution.trim(),
+        completedDate: completedDate,
+        completedBy: user?.name,
+      } : t));
+      setSelectedTask(prev => ({
+        ...prev,
+        status: 'Completed',
+        resolution: resolution.trim(),
+        completedDate: completedDate,
+        completedBy: user?.name,
+      }));
+      setShowResolutionModal(false);
+      setResolution('');
+      setResolutionError('');
     }
   }
 
@@ -279,7 +328,7 @@ function SectionMyTasks({ user }) {
 
           {/* Problem Photo from employee report */}
           {live.photoPreview && (
-            <div>
+            <div className="mb-6">
               <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Problem Photo</p>
               <img
                 src={live.photoPreview}
@@ -288,11 +337,100 @@ function SectionMyTasks({ user }) {
               />
             </div>
           )}
+
+          {/* Resolution (shown after completion) */}
+          {live.status === 'Completed' && live.resolution && (
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-[#1e3a8a] uppercase tracking-wider mb-2">Resolution / Work Performed</p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-sm text-gray-700 leading-relaxed mb-3">{live.resolution}</p>
+                <div className="text-xs text-gray-500 flex flex-wrap gap-4">
+                  {live.completedDate && (
+                    <span>
+                      <strong>Completed:</strong> {live.completedDate}
+                    </span>
+                  )}
+                  {live.completedBy && (
+                    <span>
+                      <strong>By:</strong> {live.completedBy}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-4 bg-cyan-50 border border-cyan-100 rounded-xl text-sm text-cyan-900 max-w-4xl">
           <strong>Status Flow:</strong> Assigned → In Progress → Completed. Use the action button to advance task status. All details from the employee maintenance report are shown above including location, problem type, and photo.
         </div>
+
+        {/* Resolution Modal */}
+        {showResolutionModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Complete Task</h3>
+                <p className="text-sm text-gray-500 mt-1">Record the resolution and work performed for this task</p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {/* Task Summary */}
+                <div className="bg-gray-50 rounded-lg p-4 text-sm">
+                  <p className="font-semibold text-gray-900 mb-2">{live.title}</p>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p><strong>Task ID:</strong> {live.id}</p>
+                    <p><strong>Institution:</strong> {live.institution}</p>
+                    {live.employeeName && <p><strong>Reported by:</strong> {live.employeeName}</p>}
+                    {live.problemType && <p><strong>Problem Type:</strong> {live.problemType}</p>}
+                  </div>
+                </div>
+
+                {/* Resolution Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Resolution / Work Performed <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={resolution}
+                    onChange={(e) => {
+                      setResolution(e.target.value);
+                      setResolutionError('');
+                    }}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-sm resize-y"
+                    rows="6"
+                    placeholder="Describe the work performed, parts replaced, or how the problem was resolved. Be specific and detailed. (Minimum 20 characters)"
+                  />
+                  {resolutionError && (
+                    <p className="text-red-600 text-xs mt-2">{resolutionError}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    {resolution.trim().length} / 20 characters minimum
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-100 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowResolutionModal(false);
+                    setResolution('');
+                    setResolutionError('');
+                  }}
+                  className="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-xl text-sm font-semibold transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCompleteTask}
+                  className="px-5 py-2.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-semibold rounded-xl transition"
+                >
+                  Submit & Complete Task
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }

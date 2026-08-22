@@ -16,52 +16,8 @@ const SECTIONS = [
   'My Profile',
 ];
 
-// ─── Mock MESOB-wide operational data ────────────────────────────
-// Structured per institution — keyed by organizationsData id
-const mockInstitutionStats = {
-  justice:      { queue: 6,  applications: 11, maintenance: 1, status: 'Normal' },
-  fayda:        { queue: 24, applications: 31, maintenance: 2, status: 'Busy'   },
-  revenue:      { queue: 9,  applications: 18, maintenance: 0, status: 'Normal' },
-  land:         { queue: 4,  applications: 7,  maintenance: 1, status: 'Normal' },
-  labor:        { queue: 7,  applications: 12, maintenance: 0, status: 'Normal' },
-  cbe:          { queue: 15, applications: 22, maintenance: 1, status: 'Busy'   },
-  'sidama-bank':{ queue: 5,  applications: 8,  maintenance: 0, status: 'Normal' },
-  ethiotel:     { queue: 19, applications: 29, maintenance: 3, status: 'Busy'   },
-  trade:        { queue: 8,  applications: 14, maintenance: 1, status: 'Normal' },
-  ethiopost:    { queue: 3,  applications: 5,  maintenance: 0, status: 'Normal' },
-  electric:     { queue: 11, applications: 16, maintenance: 2, status: 'Normal' },
-  urban:        { queue: 6,  applications: 10, maintenance: 1, status: 'Normal' },
-};
-
-const mockQueueItems = [
-  { id: '#Q-8841', institution: 'National ID Program',    citizen: 'Meron Tadesse', service: 'National ID Registration', priority: 'High',   status: 'Waiting'    },
-  { id: '#Q-8840', institution: 'National ID Program',    citizen: 'Kebede Worku',  service: 'ID Card Replacement',      priority: 'Medium', status: 'Processing' },
-  { id: '#Q-8839', institution: 'Commercial Bank of Ethiopia', citizen: 'Selamawit A.', service: 'Account Opening',     priority: 'Normal', status: 'Waiting'    },
-  { id: '#Q-8835', institution: 'Ethio Telecom',          citizen: 'Tigist Alemu',  service: 'SIM Card Registration',    priority: 'Normal', status: 'Waiting'    },
-  { id: '#Q-8831', institution: 'Ministry of Revenues',   citizen: 'Dawit Bekele',  service: 'TIN Registration',         priority: 'High',   status: 'Waiting'    },
-  { id: '#Q-8828', institution: 'Ethio Telecom',          citizen: 'Aziza W.',      service: 'Enterprise Service',       priority: 'Medium', status: 'Processing' },
-  { id: '#Q-8820', institution: 'National ID Program',    citizen: 'Solomon G.',    service: 'Fayda Data Update',        priority: 'Normal', status: 'Completed'  },
-];
-
-const mockApplications = [
-  { id: '#APP-1024', institution: 'National ID Program',        service: 'National ID Registration', submitted: 'Aug 11, 2026', status: 'Pending'     },
-  { id: '#APP-1020', institution: 'National ID Program',        service: 'ID Card Replacement',      submitted: 'Aug 10, 2026', status: 'Waiting'     },
-  { id: '#APP-1015', institution: 'National ID Program',        service: 'National ID Registration', submitted: 'Aug 08, 2026', status: 'In Progress' },
-  { id: '#APP-1010', institution: 'Commercial Bank of Ethiopia', service: 'Account Opening',         submitted: 'Aug 07, 2026', status: 'Completed'   },
-  { id: '#APP-1005', institution: 'Ethio Telecom',              service: 'SIM Card Registration',    submitted: 'Aug 06, 2026', status: 'Completed'   },
-  { id: '#APP-0998', institution: 'Ministry of Revenues',       service: 'VAT Registration',         submitted: 'Aug 05, 2026', status: 'Pending'     },
-  { id: '#APP-0990', institution: 'Ethio Telecom',              service: 'Enterprise Service',        submitted: 'Aug 03, 2026', status: 'In Progress' },
-];
-
-const mockMaintenanceItems = [
-  { id: '#TASK-101', institution: 'National ID Program',    title: 'Replace network switch – Room 3B', priority: 'High',   technician: 'Technician', status: 'In Progress', report: null          },
-  { id: '#TASK-098', institution: 'National ID Program',    title: 'Inspect UPS units – Server room',  priority: 'Medium', technician: 'Technician', status: 'Completed',   report: '#RPT-055'    },
-  { id: '#TASK-094', institution: 'Ethio Telecom',          title: 'Fix printer – Counter 2',          priority: 'Normal', technician: 'Unassigned',  status: 'Assigned',    report: null          },
-  { id: '#TASK-091', institution: 'Commercial Bank of Ethiopia', title: 'Network cable replacement',  priority: 'Medium', technician: 'Technician', status: 'In Progress', report: null          },
-  { id: '#TASK-087', institution: 'Ministry of Revenues',   title: 'OS update – Admin workstations',   priority: 'Normal', technician: 'Technician', status: 'Completed',   report: '#RPT-051'    },
-];
-
-// Mock announcements removed - using shared data system
+// No mock data - ready for backend integration
+// Queue, applications, and maintenance data will come from API
 
 // ─── Badge helpers ────────────────────────────────────────────────
 function PriorityBadge({ priority }) {
@@ -87,9 +43,11 @@ function StatusBadge({ status }) {
 // ─── SECTION: Dashboard Overview ─────────────────────────────────
 function SectionDashboard({ setActiveSection }) {
   const totalInstitutions = organizationsData.length;
-  const totalQueue        = Object.values(mockInstitutionStats).reduce((s, i) => s + i.queue, 0);
-  const totalApps         = Object.values(mockInstitutionStats).reduce((s, i) => s + i.applications, 0);
-  const totalMaint        = Object.values(mockInstitutionStats).reduce((s, i) => s + i.maintenance, 0);
+  // TODO: Replace with API data when backend is integrated
+  const totalQueue = 0; // Will come from queue management API
+  const totalApps = 0; // Will come from application tracking API
+  const tasks = getMaintenanceTasks({}); // Using real maintenance task system
+  const totalMaint = tasks.filter(t => t.status !== 'Completed').length;
 
   return (
     <>
@@ -130,7 +88,8 @@ function SectionDashboard({ setActiveSection }) {
             </thead>
             <tbody>
               {organizationsData.slice(0, 6).map(org => {
-                const s = mockInstitutionStats[org.id] || { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
+                // TODO: Replace with real API data
+                const s = { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
                 return (
                   <tr key={org.id}>
                     <td className="font-medium">{org.name_en}</td>
@@ -154,20 +113,9 @@ function SectionDashboard({ setActiveSection }) {
             <h2 className="font-semibold text-gray-900">Queue Snapshot</h2>
             <button onClick={() => setActiveSection('Queue Monitoring')} className="text-sm text-blue-600 hover:underline font-medium">View all</button>
           </div>
-          <div className="table-container border-0 rounded-none">
-            <table className="data-table">
-              <thead><tr><th>Ticket</th><th>Institution</th><th>Priority</th><th>Status</th></tr></thead>
-              <tbody>
-                {mockQueueItems.filter(q => q.status !== 'Completed').slice(0, 4).map(q => (
-                  <tr key={q.id}>
-                    <td className="font-medium">{q.id}</td>
-                    <td>{q.institution}</td>
-                    <td><PriorityBadge priority={q.priority} /></td>
-                    <td><StatusBadge status={q.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="p-6 text-center text-gray-400 py-12">
+            <p className="text-sm">Queue management system will be integrated with backend API.</p>
+            <p className="text-xs mt-2">Active queue items will appear here.</p>
           </div>
         </div>
 
@@ -177,21 +125,27 @@ function SectionDashboard({ setActiveSection }) {
             <h2 className="font-semibold text-gray-900">Maintenance Snapshot</h2>
             <button onClick={() => setActiveSection('Maintenance Oversight')} className="text-sm text-blue-600 hover:underline font-medium">View all</button>
           </div>
-          <div className="table-container border-0 rounded-none">
-            <table className="data-table">
-              <thead><tr><th>Task ID</th><th>Institution</th><th>Priority</th><th>Status</th></tr></thead>
-              <tbody>
-                {mockMaintenanceItems.filter(t => t.status !== 'Completed').slice(0, 4).map(t => (
-                  <tr key={t.id}>
-                    <td className="font-medium">{t.id}</td>
-                    <td>{t.institution}</td>
-                    <td><PriorityBadge priority={t.priority} /></td>
-                    <td><StatusBadge status={t.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {tasks.filter(t => t.status !== 'Completed').length > 0 ? (
+            <div className="table-container border-0 rounded-none">
+              <table className="data-table">
+                <thead><tr><th>Task ID</th><th>Institution</th><th>Priority</th><th>Status</th></tr></thead>
+                <tbody>
+                  {tasks.filter(t => t.status !== 'Completed').slice(0, 4).map(t => (
+                    <tr key={t.id}>
+                      <td className="font-medium">{t.id}</td>
+                      <td>{t.institution}</td>
+                      <td><PriorityBadge priority={t.priority} /></td>
+                      <td><StatusBadge status={t.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-6 text-center text-gray-400">
+              <p className="text-sm">No open maintenance tasks</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -208,7 +162,8 @@ function SectionInstitutionMonitoring() {
 
   if (selected) {
     const org = organizationsData.find(o => o.id === selected);
-    const s   = mockInstitutionStats[selected] || { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
+    // TODO: Replace with real API data
+    const s = { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
     return (
       <>
         <div className="mb-6">
@@ -259,7 +214,8 @@ function SectionInstitutionMonitoring() {
             <thead><tr><th>Institution</th><th>Queue</th><th>Applications</th><th>Maintenance</th><th>Status</th><th>Action</th></tr></thead>
             <tbody>
               {organizationsData.map(org => {
-                const s = mockInstitutionStats[org.id] || { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
+                // TODO: Replace with real API data
+                const s = { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
                 return (
                   <tr key={org.id}>
                     <td className="font-medium">{org.name_en}</td>
@@ -284,12 +240,12 @@ function SectionInstitutionMonitoring() {
 
 // ─── SECTION: Queue Monitoring ────────────────────────────────────
 function SectionQueueMonitoring() {
-  const [filterInst, setFilterInst] = useState('');
-  const institutions = [...new Set(mockQueueItems.map(q => q.institution))];
-  const filtered = filterInst ? mockQueueItems.filter(q => q.institution === filterInst) : mockQueueItems;
-  const waiting   = filtered.filter(q => q.status === 'Waiting').length;
-  const processing= filtered.filter(q => q.status === 'Processing').length;
-  const completed = filtered.filter(q => q.status === 'Completed').length;
+  // TODO: Replace with real queue data from API
+  const queueItems = []; // Will come from queue management system
+  
+  const waiting = 0;
+  const processing = 0;
+  const completed = 0;
 
   return (
     <>
@@ -302,36 +258,21 @@ function SectionQueueMonitoring() {
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Processing</p><p className="text-2xl font-bold">{processing}</p></div>
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Completed</p><p className="text-2xl font-bold text-green-600">{completed}</p></div>
       </div>
-      <div className="mb-5 flex items-center gap-3">
-        <select value={filterInst} onChange={e => setFilterInst(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none transition text-sm bg-white">
-          <option value="">All Institutions</option>
-          {institutions.map(i => <option key={i} value={i}>{i}</option>)}
-        </select>
-        {filterInst && <button onClick={() => setFilterInst('')} className="text-sm text-blue-600 hover:underline">Clear filter</button>}
-      </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Queue Items</h3>
-          <span className="text-sm text-gray-500">{filtered.length} items</span>
+          <span className="text-sm text-gray-500">{queueItems.length} items</span>
         </div>
-        <div className="table-container border-0 rounded-none">
-          <table className="data-table">
-            <thead><tr><th>Ticket</th><th>Institution</th><th>Citizen</th><th>Service</th><th>Priority</th><th>Status</th></tr></thead>
-            <tbody>
-              {filtered.map(q => (
-                <tr key={q.id}>
-                  <td className="font-medium">{q.id}</td>
-                  <td>{q.institution}</td>
-                  <td>{q.citizen}</td>
-                  <td>{q.service}</td>
-                  <td><PriorityBadge priority={q.priority} /></td>
-                  <td><StatusBadge status={q.status} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="p-6 text-center text-gray-400 py-12">
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p className="text-sm font-medium mb-2">Queue Management System Not Yet Integrated</p>
+          <p className="text-xs">Active queue items from all institutions will appear here once the queue management system is connected to the backend.</p>
         </div>
+      </div>
+      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
+        <strong>Note:</strong> Queue monitoring across all MESOB institutions will be available when the queue management system is integrated with the backend API.
       </div>
     </>
   );
@@ -339,20 +280,12 @@ function SectionQueueMonitoring() {
 
 // ─── SECTION: Application Monitoring ─────────────────────────────
 function SectionApplicationMonitoring() {
-  const [filterInst, setFilterInst] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const institutions = [...new Set(mockApplications.map(a => a.institution))];
-  const statuses     = [...new Set(mockApplications.map(a => a.status))];
-
-  const filtered = mockApplications.filter(a => {
-    const instMatch   = !filterInst   || a.institution === filterInst;
-    const statusMatch = !filterStatus || a.status === filterStatus;
-    return instMatch && statusMatch;
-  });
-
-  const pending  = mockApplications.filter(a => a.status === 'Pending' || a.status === 'Waiting').length;
-  const inProg   = mockApplications.filter(a => a.status === 'In Progress').length;
-  const done     = mockApplications.filter(a => a.status === 'Completed').length;
+  // TODO: Replace with real application data from API
+  const applications = []; // Will come from application tracking system
+  
+  const pending = 0;
+  const inProg = 0;
+  const done = 0;
 
   return (
     <>
@@ -365,42 +298,21 @@ function SectionApplicationMonitoring() {
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">In Progress</p><p className="text-2xl font-bold">{inProg}</p></div>
         <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Completed</p><p className="text-2xl font-bold text-green-600">{done}</p></div>
       </div>
-      <div className="mb-5 flex flex-wrap gap-3">
-        <select value={filterInst} onChange={e => setFilterInst(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-400 outline-none transition text-sm bg-white">
-          <option value="">All Institutions</option>
-          {institutions.map(i => <option key={i} value={i}>{i}</option>)}
-        </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-          className="px-4 py-2.5 rounded-xl border border-gray-300 focus:ring-2 focus:ring-red-400 outline-none transition text-sm bg-white">
-          <option value="">All Statuses</option>
-          {statuses.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
-        {(filterInst || filterStatus) && <button onClick={() => { setFilterInst(''); setFilterStatus(''); }} className="text-sm text-blue-600 hover:underline">Clear</button>}
-      </div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">Applications</h3>
-          <span className="text-sm text-gray-500">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
+          <span className="text-sm text-gray-500">{applications.length} result{applications.length !== 1 ? 's' : ''}</span>
         </div>
-        <div className="table-container border-0 rounded-none">
-          <table className="data-table">
-            <thead><tr><th>App ID</th><th>Institution</th><th>Service</th><th>Submitted</th><th>Status</th></tr></thead>
-            <tbody>
-              {filtered.length === 0
-                ? <tr><td colSpan={5} className="text-center text-gray-400 py-6">No matching applications.</td></tr>
-                : filtered.map(a => (
-                  <tr key={a.id}>
-                    <td className="font-medium">{a.id}</td>
-                    <td>{a.institution}</td>
-                    <td>{a.service}</td>
-                    <td>{a.submitted}</td>
-                    <td><StatusBadge status={a.status} /></td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+        <div className="p-6 text-center text-gray-400 py-12">
+          <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <p className="text-sm font-medium mb-2">Application Tracking System Not Yet Integrated</p>
+          <p className="text-xs">Applications from all institutions will appear here once the application tracking system is connected to the backend.</p>
         </div>
+      </div>
+      <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-800">
+        <strong>Note:</strong> Application monitoring across all MESOB institutions will be available when the application tracking system is integrated with the backend API.
       </div>
     </>
   );
@@ -458,17 +370,16 @@ function SectionMaintenanceOversight() {
 function SectionReports() {
   const [activeReport, setActiveReport] = useState('queue');
 
-  const qWaiting    = mockQueueItems.filter(q => q.status === 'Waiting').length;
-  const qProcessing = mockQueueItems.filter(q => q.status === 'Processing').length;
-  const qCompleted  = mockQueueItems.filter(q => q.status === 'Completed').length;
-
-  const appPending  = mockApplications.filter(a => a.status === 'Pending' || a.status === 'Waiting').length;
-  const appInProg   = mockApplications.filter(a => a.status === 'In Progress').length;
-  const appDone     = mockApplications.filter(a => a.status === 'Completed').length;
-
-  const maintOpen   = mockMaintenanceItems.filter(t => t.status !== 'Completed').length;
-  const maintDone   = mockMaintenanceItems.filter(t => t.status === 'Completed').length;
-  const maintReport = mockMaintenanceItems.filter(t => t.report).length;
+  // TODO: Connect to backend API for real MESOB-wide reports data
+  const qWaiting = 0;
+  const qProcessing = 0;
+  const qCompleted = 0;
+  const appPending = 0;
+  const appInProg = 0;
+  const appDone = 0;
+  const maintOpen = 0;
+  const maintDone = 0;
+  const maintReport = 0;
 
   const tabs = [
     { key: 'queue',       label: 'Queue Report'       },
@@ -515,15 +426,15 @@ function SectionReports() {
               <table className="data-table">
                 <thead><tr><th>Ticket</th><th>Institution</th><th>Service</th><th>Priority</th><th>Status</th></tr></thead>
                 <tbody>
-                  {mockQueueItems.map(q => (
-                    <tr key={q.id}>
-                      <td className="font-medium">{q.id}</td>
-                      <td>{q.institution}</td>
-                      <td>{q.service}</td>
-                      <td><PriorityBadge priority={q.priority} /></td>
-                      <td><StatusBadge status={q.status} /></td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td colSpan={5} className="text-center text-gray-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                      <p className="font-medium text-gray-500">No queue data available yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Queue reports will appear when the queue management system is integrated</p>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -545,15 +456,15 @@ function SectionReports() {
               <table className="data-table">
                 <thead><tr><th>App ID</th><th>Institution</th><th>Service</th><th>Submitted</th><th>Status</th></tr></thead>
                 <tbody>
-                  {mockApplications.map(a => (
-                    <tr key={a.id}>
-                      <td className="font-medium">{a.id}</td>
-                      <td>{a.institution}</td>
-                      <td>{a.service}</td>
-                      <td>{a.submitted}</td>
-                      <td><StatusBadge status={a.status} /></td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td colSpan={5} className="text-center text-gray-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="font-medium text-gray-500">No application data available yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Application reports will appear when the application tracking system is integrated</p>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -575,17 +486,15 @@ function SectionReports() {
               <table className="data-table">
                 <thead><tr><th>Task ID</th><th>Institution</th><th>Task</th><th>Priority</th><th>Technician</th><th>Status</th><th>Report</th></tr></thead>
                 <tbody>
-                  {mockMaintenanceItems.map(t => (
-                    <tr key={t.id}>
-                      <td className="font-medium">{t.id}</td>
-                      <td>{t.institution}</td>
-                      <td>{t.title}</td>
-                      <td><PriorityBadge priority={t.priority} /></td>
-                      <td>{t.technician}</td>
-                      <td><StatusBadge status={t.status} /></td>
-                      <td>{t.report ? <span className="text-green-600 font-medium text-sm">Submitted</span> : <span className="text-gray-400 text-sm">—</span>}</td>
-                    </tr>
-                  ))}
+                  <tr>
+                    <td colSpan={7} className="text-center text-gray-400 py-8">
+                      <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <p className="font-medium text-gray-500">Using live maintenance data</p>
+                      <p className="text-sm text-gray-400 mt-1">See Maintenance Oversight for current maintenance tasks</p>
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -598,8 +507,8 @@ function SectionReports() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Total Institutions</p><p className="text-2xl font-bold">{organizationsData.length}</p></div>
-            <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Busy</p><p className="text-2xl font-bold text-amber-600">{Object.values(mockInstitutionStats).filter(s => s.status === 'Busy').length}</p></div>
-            <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Normal</p><p className="text-2xl font-bold text-green-600">{Object.values(mockInstitutionStats).filter(s => s.status === 'Normal').length}</p></div>
+            <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Busy</p><p className="text-2xl font-bold text-amber-600">0</p></div>
+            <div className="stat-card"><p className="text-sm text-gray-500 mb-1">Normal</p><p className="text-2xl font-bold text-green-600">{organizationsData.length}</p></div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
             <div className="px-6 py-4 border-b border-gray-100"><h3 className="font-semibold text-gray-900">Institution Report – MESOB-wide</h3></div>
@@ -607,18 +516,15 @@ function SectionReports() {
               <table className="data-table">
                 <thead><tr><th>Institution</th><th>Queue</th><th>Applications</th><th>Maintenance</th><th>Status</th></tr></thead>
                 <tbody>
-                  {organizationsData.map(org => {
-                    const s = mockInstitutionStats[org.id] || { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
-                    return (
-                      <tr key={org.id}>
-                        <td className="font-medium">{org.name_en}</td>
-                        <td>{s.queue}</td>
-                        <td>{s.applications}</td>
-                        <td>{s.maintenance}</td>
-                        <td><StatusBadge status={s.status} /></td>
-                      </tr>
-                    );
-                  })}
+                  {organizationsData.map(org => (
+                    <tr key={org.id}>
+                      <td className="font-medium">{org.name_en}</td>
+                      <td>0</td>
+                      <td>0</td>
+                      <td>0</td>
+                      <td><StatusBadge status="Normal" /></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -642,10 +548,11 @@ function SectionAnalytics() {
     ? institutions.filter(o => o.id === filterInst)
     : institutions;
 
-  const totalQueue = displayInsts.reduce((s, o) => s + (mockInstitutionStats[o.id]?.queue || 0), 0);
-  const totalApps  = displayInsts.reduce((s, o) => s + (mockInstitutionStats[o.id]?.applications || 0), 0);
-  const totalMaint = displayInsts.reduce((s, o) => s + (mockInstitutionStats[o.id]?.maintenance || 0), 0);
-  const busyCount  = displayInsts.filter(o => (mockInstitutionStats[o.id]?.status || 'Normal') === 'Busy').length;
+  // TODO: Connect to backend API for real institution statistics
+  const totalQueue = 0;
+  const totalApps = 0;
+  const totalMaint = 0;
+  const busyCount = 0;
 
   return (
     <>
@@ -681,18 +588,15 @@ function SectionAnalytics() {
           <table className="data-table">
             <thead><tr><th>Institution</th><th>Queue</th><th>Applications</th><th>Maintenance</th><th>Status</th></tr></thead>
             <tbody>
-              {displayInsts.map(org => {
-                const s = mockInstitutionStats[org.id] || { queue: 0, applications: 0, maintenance: 0, status: 'Normal' };
-                return (
-                  <tr key={org.id}>
-                    <td className="font-medium">{org.name_en}</td>
-                    <td>{s.queue}</td>
-                    <td>{s.applications}</td>
-                    <td>{s.maintenance}</td>
-                    <td><StatusBadge status={s.status} /></td>
-                  </tr>
-                );
-              })}
+              {displayInsts.map(org => (
+                <tr key={org.id}>
+                  <td className="font-medium">{org.name_en}</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td>0</td>
+                  <td><StatusBadge status="Normal" /></td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
