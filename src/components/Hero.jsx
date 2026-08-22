@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
 const slides = [
+  { src: '/image/sidasumuda.jpg', alt: 'Hawassa Background' },
   { src: '/image/HM.jpg',       alt: 'Banner 1' },
   { src: '/image/hm.mngr.jpg',  alt: 'Banner 2' },
   { src: '/image/hm.ab.jpg',    alt: 'Banner 3' },

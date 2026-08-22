@@ -772,7 +772,7 @@ function SectionAnnouncements({ user, userInstitution }) {
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState('list'); // 'list' | 'new'
   const [form, setForm] = useState({ title: '', body: '' });
-  const [formError, setFormError] = '';
+  const [formError, setFormError] = useState('');
 
   function markRead(id) { setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a)); }
 

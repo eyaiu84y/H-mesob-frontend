@@ -7,6 +7,7 @@
 const MAINTENANCE_REPORTS_KEY = 'mesob_maintenance_reports';
 const MAINTENANCE_TASKS_KEY = 'mesob_maintenance_tasks';
 const ANNOUNCEMENTS_KEY = 'mesob_announcements';
+const APPLICATIONS_KEY = 'mesob_citizen_applications';
 
 // Initialize default data if not exists
 function initializeData() {
@@ -15,6 +16,9 @@ function initializeData() {
   }
   if (!localStorage.getItem(MAINTENANCE_TASKS_KEY)) {
     localStorage.setItem(MAINTENANCE_TASKS_KEY, JSON.stringify([]));
+  }
+  if (!localStorage.getItem(APPLICATIONS_KEY)) {
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify([]));
   }
   if (!localStorage.getItem(ANNOUNCEMENTS_KEY)) {
     const defaultAnnouncements = [
@@ -230,5 +234,82 @@ export function markAnnouncementRead(id) {
     return { success: true };
   } catch (error) {
     return { success: false, message: error.message };
+  }
+}
+
+// ─── CITIZEN APPLICATIONS API ─────────────────────────────────────
+export function getApplications(filters = {}) {
+  try {
+    const applications = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]');
+    
+    let filtered = applications;
+    
+    if (filters.citizenEmail) {
+      filtered = filtered.filter(app => app.citizenEmail === filters.citizenEmail);
+    }
+    
+    if (filters.status) {
+      filtered = filtered.filter(app => app.status === filters.status);
+    }
+    
+    if (filters.institution) {
+      filtered = filtered.filter(app => app.institution === filters.institution);
+    }
+    
+    return filtered.sort((a, b) => b.createdAt - a.createdAt);
+  } catch {
+    return [];
+  }
+}
+
+export function createApplication(application) {
+  try {
+    const applications = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]');
+    const applicationId = `APP-${Date.now().toString().slice(-6)}`;
+    const currentDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    
+    const newApplication = {
+      id: applicationId,
+      referenceNumber: applicationId,
+      ...application,
+      status: 'Submitted',
+      submittedDate: currentDate,
+      lastUpdated: currentDate,
+      createdAt: Date.now(),
+    };
+    
+    applications.push(newApplication);
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(applications));
+    return { success: true, application: newApplication };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+export function updateApplication(id, updates) {
+  try {
+    const applications = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]');
+    const index = applications.findIndex(app => app.id === id);
+    if (index === -1) return { success: false, message: 'Application not found' };
+    
+    applications[index] = {
+      ...applications[index],
+      ...updates,
+      lastUpdated: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(applications));
+    return { success: true, application: applications[index] };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+}
+
+export function getApplication(id) {
+  try {
+    const applications = JSON.parse(localStorage.getItem(APPLICATIONS_KEY) || '[]');
+    const application = applications.find(app => app.id === id);
+    return application || null;
+  } catch {
+    return null;
   }
 }

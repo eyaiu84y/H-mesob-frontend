@@ -643,38 +643,78 @@ function SectionReports() {
 // ─── SECTION: Announcements ─────────────────────────────────────
 function SectionAnnouncements() {
   const { user } = useAuth();
-  const [announcements] = useState(() => getAnnouncements({ institution: user?.institution }));
+  const [announcements, setAnnouncements] = useState(() => getAnnouncements({ institution: user?.institution }));
+  const [selected, setSelected] = useState(null);
 
+  function markRead(id) {
+    setAnnouncements(prev => prev.map(a => a.id === id ? { ...a, read: true } : a));
+  }
+
+  // Announcement detail view
+  if (selected) {
+    const ann = announcements.find(a => a.id === selected);
+    return (
+      <>
+        <div className="mb-6">
+          <button
+            onClick={() => setSelected(null)}
+            className="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Announcements
+          </button>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">{ann.title}</h2>
+            {!ann.read && <span className="badge bg-blue-100 text-blue-800 flex-shrink-0">New</span>}
+          </div>
+          <p className="text-sm text-gray-500 mb-4">{ann.date} {ann.author && `• ${ann.author}`}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{ann.body}</p>
+        </div>
+      </>
+    );
+  }
+
+  // Announcement list view
   return (
     <>
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Announcements</h2>
-        <p className="text-sm text-gray-500">Latest updates and notices from MESOB Center.</p>
+        <p className="text-sm text-gray-500">Latest updates and notices from your institution.</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {announcements.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+              </svg>
+            </div>
             <p className="font-medium text-gray-500">No announcements</p>
             <p className="text-sm text-gray-400 mt-1">Check back later for updates.</p>
           </div>
         ) : (
-          announcements.map(announcement => (
-            <div key={announcement.id} className={`bg-white rounded-xl border p-5 shadow-sm ${!announcement.read ? 'border-blue-200' : 'border-gray-100'}`}>
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${!announcement.read ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900">{announcement.title}</h3>
-                    {!announcement.read && <span className="badge bg-blue-100 text-blue-700 text-xs">New</span>}
+          announcements.map(ann => (
+            <div
+              key={ann.id}
+              onClick={() => { setSelected(ann.id); markRead(ann.id); }}
+              className={`bg-white rounded-2xl border shadow-sm p-5 cursor-pointer hover:shadow-md transition-all duration-200 ${ann.read ? 'border-gray-100' : 'border-blue-200 bg-blue-50/30'}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {!ann.read && <span className="inline-block w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />}
+                    <h3 className="font-semibold text-sm text-gray-900 leading-snug">{ann.title}</h3>
                   </div>
-                  <p className="text-sm text-gray-600 mb-3">{announcement.content}</p>
-                  <p className="text-xs text-gray-500">{announcement.date}</p>
+                  <p className="text-xs text-gray-500">{ann.date} {ann.author && `• ${ann.author}`}</p>
                 </div>
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
           ))
